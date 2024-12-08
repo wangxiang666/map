@@ -3,35 +3,19 @@
     <div class="login-content-out">
       <div class="login-content">
         <div class="login-content-main">
-          <div class="login-icon-group">
+          <!-- <div class="login-icon-group">
             <div class="login-icon-group-title">
               <img :src="logoMini" />
               <div class="login-icon-group-title-text font25">{{ getThemeConfig.globalViceTitle }}</div>
             </div>
-          </div>
+          </div> -->
           <div v-if="!isScan">
-            <el-tabs v-model="tabsActiveName">
-              <el-tab-pane :label="$t('message.label.one1')" name="account">
-                <Account />
-              </el-tab-pane>
-              <!--el-tab-pane :label="$t('message.label.two2')" name="mobile">
-                <Mobile />
-              </el-tab-pane-->
-            </el-tabs>
+            <Account />
           </div>
-          <Scan v-if="isScan" />
           <!--div class="login-content-main-sacn" @click="isScan = !isScan">
             <i class="iconfont" :class="isScan ? 'icon-diannao1' : 'icon-barcode-qr'"></i>
             <div class="login-content-main-sacn-delta"></div>
           </div-->
-        </div>
-      </div>
-    </div>
-    <div class="login-footer">
-      <div class="login-footer-content mt15">
-        <div class="login-footer-content-warp">
-          <div>xxxx All Rights Reserved.</div>
-          <div class="mt5">xxx公司版权所有</div>
         </div>
       </div>
     </div>
@@ -124,13 +108,12 @@ export default defineComponent({
     align-items: center;
   }
   .login-content {
-    width: 500px;
-    padding: 20px;
+    background: url("/@/assets/loginForm.png") no-repeat;
+    background-size: 100% 100%;
+    width: 1015px;
+    height: 413px;
+    padding: 100px 300px;
     margin: auto;
-    background-color: var(--el-color-white);
-    border: 5px solid var(--el-color-primary-light-8);
-    border-radius: 5px;
-    overflow: hidden;
     z-index: 1;
     position: relative;
     .login-content-main {

@@ -33,12 +33,17 @@ const viteConfig = defineConfig((mode: ConfigEnv) => {
 					changeOrigin: true,
 					rewrite: (path) => path.replace(/^\/gitee/, ''),
 				},
-				// '/api': {
-				// 	target: 'http://172.16.2.22',
-				// 	ws: true,
-				// 	changeOrigin: true,
-				// 	rewrite: (path) => path,
-				// },
+				'/api': {
+					target: 'http://101.201.244.31:8808/',
+					ws: true,
+					changeOrigin: true,
+					rewrite: (path) => path,
+				},
+				'/geoserver': {
+					target: 'http://101.201.244.31:8081', // GeoServer 地址
+					changeOrigin: true,
+					secure: false,
+				},
 			},
 		},
 		build: {

@@ -26,7 +26,7 @@ export const dynamicRoutes: Array<RouteRecordRaw> = [
 		path: '/',
 		name: '/',
 		component: () => import('/@/layout/index.vue'),
-		redirect: '/visualizingDemo1',
+		redirect: '/home',
 		meta: {
 			isKeepAlive: true,
 		},
@@ -146,9 +146,9 @@ export const staticRoutes: Array<RouteRecordRaw> = [
 	 * 请写在 `dynamicRoutes` 路由数组中
 	 */
 	{
-		path: '/visualizingDemo1',
-		name: 'visualizingDemo1',
-		component: () => import('/@/views/visualizing/demo1.vue'),
+		path: '/visualizing',
+		name: 'visualizing',
+		component: () => import('../views/visualizing/screen.vue'),
 		meta: {
 			title: 'message.router.visualizingLinkDemo1',
 		},

@@ -7,7 +7,7 @@
           v-model="ruleForm.username"
           clearable autocomplete="off">
         <template #prefix>
-          <el-icon class="el-input__icon"><ele-User /></el-icon>
+          <img src="../../../assets/user.png" alt="" style="width: 28px;height: 33px">
         </template>
       </el-input>
     </el-form-item>
@@ -20,7 +20,7 @@
           @keyup.enter="onSignIn"
       >
         <template #prefix>
-          <el-icon class="el-input__icon"><ele-Unlock /></el-icon>
+          <img src="../../../assets/lock.png" alt="" style="width: 29px;height: 35px">
         </template>
         <template #suffix>
           <i
@@ -32,7 +32,7 @@
         </template>
       </el-input>
     </el-form-item>
-    <el-form-item class="login-animation3" prop="verifyCode">
+    <!-- <el-form-item class="login-animation3" prop="verifyCode">
       <el-col :span="15">
         <el-input
             type="text"
@@ -61,9 +61,9 @@
           />
         </div>
       </el-col>
-    </el-form-item>
+    </el-form-item> -->
     <el-form-item class="login-animation4">
-      <el-button type="primary" class="login-content-submit" round @click="onSignIn" :loading="loading.signIn">
+      <el-button type="primary" class="login-content-submit" @click="onSignIn" :loading="loading.signIn">
         <span>{{ $t('message.account.accountBtnText') }}</span>
       </el-button>
     </el-form-item>
@@ -126,14 +126,14 @@ export default defineComponent({
       captchaSrc:'',
 		});
     onMounted(() => {
-      getCaptcha();
+      // getCaptcha();
     });
-    const getCaptcha = () => {
-      captcha().then((res:any)=>{
-        state.captchaSrc = res.data.img
-        state.ruleForm.verifyKey = res.data.key
-      })
-    };
+    // const getCaptcha = () => {
+    //   captcha().then((res:any)=>{
+    //     state.captchaSrc = res.data.img
+    //     state.ruleForm.verifyKey = res.data.key
+    //   })
+    // };
 		// 时间获取
 		const currentTime = computed(() => {
 			return formatAxis(new Date());
@@ -176,7 +176,7 @@ export default defineComponent({
             }
           }).catch(()=>{
             state.loading.signIn = false;
-            getCaptcha();
+            // getCaptcha();
           })
         }
       })
@@ -187,14 +187,14 @@ export default defineComponent({
 			let currentTimeInfo = currentTime.value;
 			// 登录成功，跳到转首页
 			// 如果是复制粘贴的路径，非首页/登录页，那么登录成功后重定向到对应的路径中
-			if (route.query?.redirect) {
-				router.push({
-					path: <string>route.query?.redirect,
-					query: Object.keys(<string>route.query?.params).length > 0 ? JSON.parse(<string>route.query?.params) : '',
-				});
-			} else {
-				router.push('/');
-			}
+			// if (route.query?.redirect) {
+			// 	router.push({
+			// 		path: <string>route.query?.redirect,
+			// 		query: Object.keys(<string>route.query?.params).length > 0 ? JSON.parse(<string>route.query?.params) : '',
+			// 	});
+			// } else {
+				router.push('/visualizing');
+			// }
 			// 登录成功提示
 			// 关闭 loading
 			state.loading.signIn = true;
@@ -205,7 +205,7 @@ export default defineComponent({
 		};
 		return {
 			onSignIn,
-      getCaptcha,
+      // getCaptcha,
       loginForm,
 			...toRefs(state),
 		};
@@ -217,6 +217,12 @@ export default defineComponent({
 <style scoped lang="scss">
 .login-content-form {
   margin-top: 20px;
+  ::v-deep(.el-input__wrapper){
+    background-color: transparent;
+    box-shadow: none;
+    border-bottom: 2px solid #00F5FF;
+    border-radius: 0;
+  }
   @for $i from 1 through 4 {
     .login-animation#{$i} {
       opacity: 0;
@@ -259,6 +265,9 @@ export default defineComponent({
     letter-spacing: 2px;
     font-weight: 300;
     margin-top: 15px;
+    background-color: #00F5FF;
+    border: none;
+    color: #000000;
   }
 }
 </style>
