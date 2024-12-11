@@ -1,3 +1,11 @@
+/*
+ * @Author: wangxiang666 534167821@qq.com
+ * @Date: 2024-12-08 20:58:42
+ * @LastEditors: wangxiang666 534167821@qq.com
+ * @LastEditTime: 2024-12-10 23:21:04
+ * @FilePath: \map\vite.config.ts
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
 import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 import { defineConfig, loadEnv, ConfigEnv } from 'vite';
@@ -63,7 +71,9 @@ const viteConfig = defineConfig((mode: ConfigEnv) => {
 				},
 			},
 		},
-		css: { preprocessorOptions: { css: { charset: false } } },
+		css: {
+			preprocessorOptions: { css: { charset: false } },
+		},
 		define: {
 			__VUE_I18N_LEGACY_API__: JSON.stringify(false),
 			__VUE_I18N_FULL_INSTALL__: JSON.stringify(false),

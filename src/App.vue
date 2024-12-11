@@ -1,11 +1,13 @@
 <template>
-	<el-config-provider :size="getGlobalComponentSize" :locale="i18nLocale">
-		<router-view v-show="themeConfig.lockScreenTime > 1" />
-		<LockScreen v-if="themeConfig.isLockScreen" />
-		<Setings ref="setingsRef" v-show="themeConfig.lockScreenTime > 1" />
-		<CloseFull v-if="!themeConfig.isLockScreen" />
-	</el-config-provider>
-  <BigUploader></BigUploader>
+  <el-config-provider :size="getGlobalComponentSize"
+                      :locale="i18nLocale">
+    <router-view v-show="themeConfig.lockScreenTime > 1" />
+    <LockScreen v-if="themeConfig.isLockScreen" />
+    <Setings ref="setingsRef"
+             v-show="themeConfig.lockScreenTime > 1" />
+    <CloseFull v-if="!themeConfig.isLockScreen" />
+  </el-config-provider>
+  <!-- <BigUploader></BigUploader> -->
 </template>
 
 <script lang="ts">
@@ -20,11 +22,11 @@ import setIntroduction from '/@/utils/setIconfont';
 import LockScreen from '/@/layout/lockScreen/index.vue';
 import Setings from '/@/layout/navBars/breadcrumb/setings.vue';
 import CloseFull from '/@/layout/navBars/breadcrumb/closeFull.vue';
-import BigUploader from '/@/components/bigUploader/index.vue'
+import BigUploader from '/@/components/bigUploader/index.vue';
 
 export default defineComponent({
 	name: 'app',
-	components: { LockScreen, Setings, CloseFull,BigUploader },
+	components: { LockScreen, Setings, CloseFull, BigUploader },
 	setup() {
 		const { proxy } = <any>getCurrentInstance();
 		const setingsRef = ref();

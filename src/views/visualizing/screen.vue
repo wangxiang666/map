@@ -1,221 +1,256 @@
+<!--
+ * @Author: wangxiang666 534167821@qq.com
+ * @Date: 2024-12-08 20:58:42
+ * @LastEditors: wangxiang666 534167821@qq.com
+ * @LastEditTime: 2024-12-11 20:20:10
+ * @FilePath: \map\src\views\visualizing\screen.vue
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+-->
 <template>
-  <el-button @click="router.push('/')">进入管理平台</el-button>
-  <div id="olMap"></div>
-  
-  <!-- 使用 element-plus 的 popover -->
-  <el-popover
-    ref="popoverRef"
-    :visible="popoverVisible"
-    :virtual-ref="virtualRef"
-    virtual-triggering
-    trigger="hover"
-    placement="top"
-    :width="300"
-    popper-class="feature-popover"
-  >
-    <template #default>
-      <div v-if="currentFeature">
-        <div v-for="(value, key) in featureProperties" :key="key">
-          <template v-if="key !== 'geometry' && key !== 'geom'">
-            <strong>{{ key }}:</strong> {{ value }}
-          </template>
+  <div class="bg-container"
+       :style="{
+    '--width': `${w}px`,
+    '--height': `${h}px`,
+    '--scaleX':scaleX,
+    '--scaleY':scaleY
+   }">
+    <div class="armory-container"
+         :class="{'main-bg': [0,1].indexOf(curentScreen.activeIndex)>-1 , 'main-bg-no-light': curentScreen.activeIndex === 5}">
+      <div class="title">
+        <div class="title-text-box"
+             :style="{fontSize: curentScreen.title.length >6 ?'24px':'46px'}">
+          <span class="title-text"
+                v-for="(font,index) in curentScreen.title"
+                :key="font+index"
+                @click="handleScreenMenu({title: '大屏', activeIndex: 0})">{{font}}</span>
+        </div>
+        <div class="bg-menu bg-menu-left">
+          <div class="bg-menu-item"
+               v-for="item in screenMenuLeft"
+               :key="item.index"
+               @click="handleScreenMenu(item)">
+            <span>{{item.title}}</span>
+          </div>
+        </div>
+        <div class="bg-menu bg-menu-right">
+          <div class="bg-menu-item"
+               v-for="item in screenMenuRight"
+               :key="item.index"
+               @click="handleScreenMenu(item)">
+            <span>{{item.title}}</span>
+          </div>
         </div>
       </div>
-    </template>
-  </el-popover>
+      <div class="content-wrapper">
+        <mainScreen v-if="curentScreen.activeIndex === 0"></mainScreen>
+        <scene v-if="curentScreen.activeIndex === 1"></scene>
+        <weapon v-if="curentScreen.activeIndex === 2"></weapon>
+        <contingency v-if="curentScreen.activeIndex === 3"></contingency>
+        <taskManage v-if="curentScreen.activeIndex === 4"></taskManage>
+        <evaluate v-if="curentScreen.activeIndex === 5"></evaluate>
+      </div>
+    </div>
+  </div>
 </template>
 
-<script setup lang='ts'>
-import { onMounted,onBeforeUnmount,ref, reactive } from 'vue'
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import { NextLoading } from '/@/utils/loading';
+import weapon from '/@/views/visualizing/pages/weapon/index.vue'
+import mainScreen from '/@/views/visualizing/pages/main/index.vue'
+import taskManage from '/@/views/visualizing/pages/taskManage/index.vue'
+import contingency from '/@/views/visualizing/pages/contingency/index.vue'
+import evaluate from '/@/views/visualizing/pages/evaluate/index.vue'
+import scene from '/@/views/visualizing/pages/scene/index.vue'
 import { useRouter } from 'vue-router';
-import 'ol/ol.css';
-import Map from 'ol/Map';
-import View from 'ol/View';
-import TileLayer from 'ol/layer/Tile';
-import VectorLayer from 'ol/layer/Vector';
-import VectorSource from 'ol/source/Vector';
-import GeoJSON from 'ol/format/GeoJSON';
-import XYZ from 'ol/source/XYZ';
-import {Fill, Stroke, Style, Circle as CircleStyle} from 'ol/style';
-import TileWMS from 'ol/source/TileWMS';
-import Overlay from 'ol/Overlay';
-import { ElPopover } from 'element-plus';
-
 const router = useRouter();
-onMounted(() => {
-NextLoading.done();
-initOl();
+const curentScreen = ref({
+  title: '态势展示',
+  activeIndex: 0
 })
-onBeforeUnmount(() => {
-if (map) {
-  map.setTarget(null);
-}
-});
+const screenMenuLeft = ref([
+  {
+    activeIndex: 0,
+    title: '态势展示'
+    // title: '电能源系统毁伤与防御模拟仿真及推演评估软件系统'
+  },
+  {
+    activeIndex: 1,
+    title: '场景管理'
+  },
+  {
+    activeIndex: 2,
+    title: '武器库'
+  },
+  {
+    activeIndex: 3,
+    title: '预案管理'
+  },
 
-let map: any = null;
-let popup: any = null;
-
-// 添加状态管理
-const popoverVisible = ref(false);
-const virtualRef = reactive({
-  getBoundingClientRect: () => ({
-    width: 0,
-    height: 0,
-    top: mousePosition.y,
-    left: mousePosition.x,
-    right: mousePosition.x,
-    bottom: mousePosition.y,
-  })
-});
-const currentFeature = ref(null);
-const featureProperties = ref({});
-const mousePosition = reactive({ x: 0, y: 0 });
-
-const initOl = () => {
-// WFS 数据源
-const vectorSource = new VectorSource({
-  format: new GeoJSON({
-    geometryName: 'geom'
-  }),
-  url: '/geoserver/taiwan/ows?' +
-    'service=WFS&' +
-    'version=2.0.0&' +
-    'request=GetFeature&' +
-    'typeName=taiwan:1&'+
-    'outputFormat=application/json&' +
-    'srsName=EPSG:4326'
-});
-
-// WFS 图层
-const vectorLayer = new VectorLayer({
-  source: vectorSource,
-  style: new Style({
-    stroke: new Stroke({
-      color: '#ff0000',
-      width: 2
-    })
-  })
-});
-// WFS 数据源
-const vectorSourceLine = new VectorSource({
-  format: new GeoJSON({
-    geometryName: 'geom'
-  }),
-  url: '/geoserver/taiwan/ows?' +
-    'service=WFS&' +
-    'version=2.0.0&' +
-    'request=GetFeature&' +
-    'typeName=taiwan:line_new&'+
-    'outputFormat=application/json&' +
-    'srsName=EPSG:4326'
-});
-// WFS 图层
-const vectorLayerLine = new VectorLayer({
-  source: vectorSourceLine,
-  style: new Style({
-    stroke: new Stroke({
-      color: 'blue',
-      width: 2
-    })
-  })
-});
-
-// 创建弹出层
-popup = new Overlay({
-  element: document.getElementById('popup'),
-  positioning: 'bottom-center',
-  stopEvent: false,
-  offset: [0, -10]
-});
-
-map = new Map({
-  target: 'olMap',
-  layers: [
-    // 高德底图
-    new TileLayer({
-      source: new XYZ({
-        url: 'https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}'
-      })
-    }),
-    // 高德注记
-    new TileLayer({
-      source: new XYZ({
-        url: 'https://webst02.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=8'
-      })
-    }),
-    vectorLayerLine,
-    vectorLayer // WFS图层
-  ],
-  view: new View({
-    // 使用WMS的bbox范围来设置初始视图
-    center: [120.78931808471699, 23.621544837951505],
-    zoom: 8,
-    projection: 'EPSG:4326'
-  }),
-  overlays: [popup] // 添加overlay到地图
-});
-
-// 修改鼠标移动事件处理
-map.on('pointermove', function(evt) {
-  const pixel = evt.pixel;
-  const feature = map.forEachFeatureAtPixel(pixel, function(feature) {
-    return feature;
-  });
-
-  // 更新鼠标位置
-  const mapElement = document.getElementById('olMap');
-  if (mapElement) {
-    const rect = mapElement.getBoundingClientRect();
-    mousePosition.x = evt.originalEvent.clientX;
-    mousePosition.y = evt.originalEvent.clientY;
+])
+const screenMenuRight = ref([
+  {
+    activeIndex: 4,
+    title: '推演任务管理'
+  },
+  {
+    activeIndex: 5,
+    title: '评估管理'
+  },
+  {
+    activeIndex: 6,
+    title: '拓扑展示'
+  },
+  {
+    activeIndex: 7,
+    title: '后台管理'
   }
-
-  if (feature) {
-    // 更新当前要素和属性
-    currentFeature.value = feature;
-    featureProperties.value = feature.getProperties();
-    popoverVisible.value = true;
-    
-    // 设置鼠标样式
-    if (mapElement) {
-      mapElement.style.cursor = 'pointer';
-    }
+])
+const handleScreenMenu = (item) => {
+  if (item.activeIndex === 7) {
+    router.push('/')
   } else {
-    popoverVisible.value = false;
-    currentFeature.value = null;
-    featureProperties.value = {};
-    
-    // 重置鼠标样式
-    if (mapElement) {
-      mapElement.style.cursor = '';
-    }
+    curentScreen.value = item
   }
-});
-
-// 添加地图移动事件处理，关闭popover
-map.on('movestart', () => {
-  popoverVisible.value = false;
-});
+}
+const scaleX = ref(1)
+const scaleY = ref(1)
+const w = ref(1920)
+const h = ref(1080)
+//防抖函数
+const debounce = (func, wait) => {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
 };
+const setScale = () => {
+  console.log(window.innerWidth, window.innerHeight)
+  scaleX.value = window.innerWidth / w.value
+  scaleY.value = window.innerHeight / h.value
+}
+onMounted(() => {
+  NextLoading.done();
+  const onresize = debounce(() => setScale(), 100)
+  setScale()
+  window.addEventListener('resize', onresize)
+})
+onUnmounted(() => {
+  window.removeEventListener('resize', onresize)
+})
 </script>
 
-<style lang='scss' scoped>
-#olMap {
-width: 100vw;
-height: 100vh;
+<style lang="scss" scoped>
+.bg-container {
+	width: 100vw;
+	height: 100vh;
+	:deep(.el-input__wrapper) {
+		background: url('./images/formInput.jpg') no-repeat;
+		background-size: 100% 100%;
+		box-shadow: none !important;
+		border: 1px solid #0a5999;
+		padding: 6px 36px;
+	}
+	:deep(.el-form-item__label) {
+		color: #1890ff;
+		font-size: 16px;
+		line-height: 50px;
+	}
+
+	:deep(.el-input__inner) {
+		color: #1890ff;
+		font-size: 16px;
+	}
+
+	// :deep(.el-select) {
+	// 	width: 100%;
+	// }
+}
+.armory-container {
+	width: var(--width);
+	height: var(--height);
+	transform: scale(var(--scaleX), var(--scaleY));
+	transform-origin: 0 0;
+	position: relative;
+	background: url('./images/screen-bg.jpg') no-repeat;
+	background-size: 100% 100%;
+
+	&.main-bg {
+		background: url('./images/screenBg2.jpg') no-repeat;
+		background-size: 100% 100%;
+	}
+	&.main-bg-no-light {
+		background: url('./images/bg-no-light.jpg') no-repeat;
+		background-size: 100% 100%;
+	}
 }
 
-// 可以自定义 popover 样式
-:deep(.feature-popover) {
-  max-height: 400px;
-  overflow-y: auto;
-  
-  .el-popover__title {
-    margin: 0;
-    padding: 8px 0;
-    font-size: 16px;
-    border-bottom: 1px solid #eee;
-  }
+.title {
+	width: 100%;
+	height: 264px;
+	text-align: center;
+	background: url('./images/title.jpg') no-repeat;
+	background-size: 100% 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	justify-content: center;
+	.title-text-box {
+		width: 500px;
+		height: 86px;
+		display: flex;
+		justify-content: space-between;
+		flex-wrap: wrap;
+	}
+	.title-text {
+		font-weight: bold;
+		text-align: center;
+		background: linear-gradient(to bottom, #ffffff, #3498db);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		/* 添加发光效果 */
+		text-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+		// line-height: 86px;
+	}
+}
+.bg-menu {
+	display: flex;
+	justify-content: space-between;
+	position: absolute;
+	top: 68px;
+	width: 500px;
+	.bg-menu-item {
+		width: 117px;
+		height: 40px;
+		background: url('./images/bgMenu.jpg') no-repeat;
+		background-size: 100% 100%;
+		cursor: pointer;
+		text-align: center;
+		line-height: 40px;
+		color: #ffffff;
+		font-size: 16px;
+	}
+}
+.bg-menu-left {
+	left: 38px;
+}
+.bg-menu-right {
+	right: 35px;
+}
+.content-wrapper {
+	width: 100%;
+	height: calc(100% - 113px);
+	position: absolute;
+	top: 113px;
+	left: 0;
+	padding: 0 22px;
+}
+:deep(.bg-form-btn) {
+	background: url('./images/bgFormBtn.jpg') no-repeat;
+	background-size: 100% 100%;
+	border: none;
 }
 </style>

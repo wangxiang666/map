@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多边形与圆形交集面积计算</title>
+  <script src="https://unpkg.com/@turf/turf@6.5.0"></script> <!-- 引入 Turf.js 库 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.4.0/ol.css" /> <!-- 引入 OpenLayers 样式 -->
+  <script src="https://cdn.jsdelivr.net/npm/ol@7.4.0/dist/ol.js"></script> <!-- 引入 OpenLayers 脚本 -->
+  <style>
+    /* 设置页面整体布局 */
+    body {
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+    }
+
+    /* 地图容器，占据70%宽度 */
+    #map {
+      width: 70%;
+      height: 100%;
+    }
+
+    /* 右侧内容区域，占据30%宽度 */
+    #info {
+      width: 30%;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    /* 输入表单样式 */
+    #input-form {
+      margin-bottom: 20px;
+    }
+
+    /* 输入框样式 */
+    input[type="number"] {
+      width: 100%;
+      padding: 5px;
+      margin: 5px 0;
+    }
+
+    /* 按钮样式 */
+    button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    /* 显示面积信息的样式 */
+    p {
+      font-size: 16px;
+      margin: 5px 0;
+    }
+
+    h1 {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div> <!-- 地图容器 -->
+  <div id="info">
+    <h1>多边形与圆形交集面积计算</h1>
+    
+    <!-- 输入表单 -->
+    <div id="input-form">
+      <label for="center-lat">圆心纬度: </label>
+      <input type="number" id="center-lat" step="any" value="23.5" readonly><br><br>
+
+      <label for="center-lon">圆心经度: </label>
+      <input type="number" id="center-lon" step="any" value="121.0" readonly><br><br>
+
+      <label for="radius">圆形半径（米）: </label>
+      <input type="number" id="radius" value="5000"><br><br>
+
+      <button onclick="drawCircle()">绘制圆形</button>
+    </div>
+
+    <!-- 显示面积信息 -->
+    <p>多边形总面积: <span id="polygon-area">...</span> 平方米</p>
+    <p>交集面积: <span id="intersection-area">请输入圆形参数并点击“绘制圆形”...</span> 平方米</p>
+    <p>交集面积占比: <span id="intersection-percentage">...</span>%</p>
+  </div>
+
+  <script>
+    // 初始化 OpenLayers 地图
+    var map = new ol.Map({
+      target: 'map',
+      layers: [
+        new ol.layer.Tile({
+          source: new ol.source.OSM() // 使用 OpenStreetMap 作为底图
+        })
+      ],
+      view: new ol.View({
+        center: ol.proj.fromLonLat([121.0, 23.5]), // 设置地图中心为台湾地区
+        zoom: 9 // 设置地图初始缩放级别
+      })
+    });
+
+    // 定义固定的多边形（poly1）
+    var poly1 = turf.polygon([
+      [
+        [121.0, 23.5],
+        [121.0, 24.0],
+        [121.5, 24.0],
+        [121.5, 23.5],
+        [121.0, 23.5], // 定义一个矩形多边形
+      ],
+    ]);
+
+    // 创建 OpenLayers Feature 对象，转换坐标到地图坐标系
+    var poly1Feature = new ol.Feature({
+      geometry: new ol.geom.Polygon(
+        poly1.geometry.coordinates.map(ring =>
+          ring.map(coord => ol.proj.fromLonLat(coord)) // 将多边形的经纬度转换为地图坐标
+        )
+      )
+    });
+
+    var features = [poly1Feature]; // 将多边形添加到特征数组中
+
+    // 计算并显示多边形（poly1）的总面积
+    var poly1Area = turf.area(poly1); // 使用 Turf.js 计算多边形面积，单位为平方米
+    document.getElementById("polygon-area").textContent = poly1Area.toFixed(2); // 显示总面积
+
+    // 设置多边形的样式
+    poly1Feature.setStyle(
+      new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: "blue", // 多边形边界颜色为蓝色
+          width: 2
+        }),
+        fill: new ol.style.Fill({
+          color: "rgba(0,0,255,0.2)" // 多边形填充颜色为半透明蓝色
+        })
+      })
+    );
+
+    // 将多边形添加到 OpenLayers 地图图层
+    var vectorLayer = new ol.layer.Vector({
+      source: new ol.source.Vector({
+        features: features // 将多边形特征添加到矢量图层
+      })
+    });
+    map.addLayer(vectorLayer);
+
+    // 处理地图点击事件，更新圆心坐标
+    map.on('click', function (event) {
+      var coordinate = event.coordinate;
+      var lonLat = ol.proj.toLonLat(coordinate); // 获取点击位置的经纬度坐标
+      var lon = lonLat[0];
+      var lat = lonLat[1];
+
+      // 更新输入框中的圆心坐标
+      document.getElementById('center-lat').value = lat.toFixed(6);
+      document.getElementById('center-lon').value = lon.toFixed(6);
+    });
+
+    // 绘制圆形函数
+    function drawCircle() {
+      var centerLat = parseFloat(document.getElementById('center-lat').value); // 获取圆心纬度
+      var centerLon = parseFloat(document.getElementById('center-lon').value); // 获取圆心经度
+      var radius = parseFloat(document.getElementById('radius').value); // 获取圆形半径
+
+      // 使用 Turf.js 创建圆形
+      var turfCircle = turf.circle([centerLon, centerLat], radius / 1000, {
+        steps: 64, // 设置圆形的分段数
+        units: "kilometers" // 设置单位为千米
+      });
+
+      // 创建 OpenLayers Feature 对象，转换圆形坐标到地图坐标系
+      var circleFeature = new ol.Feature({
+        geometry: new ol.geom.Polygon(
+          turfCircle.geometry.coordinates.map(ring =>
+            ring.map(coord => ol.proj.fromLonLat(coord)) // 将圆形的经纬度转换为地图坐标
+          )
+        )
+      });
+
+      // 设置圆形的样式
+      circleFeature.setStyle(
+        new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: "green", // 圆形边界颜色为绿色
+            width: 2
+          }),
+          fill: new ol.style.Fill({
+            color: "rgba(0,255,0,0.2)" // 圆形填充颜色为半透明绿色
+          })
+        })
+      );
+      vectorLayer.getSource().clear(); // 清除之前的图层内容
+      vectorLayer.getSource().addFeature(poly1Feature); // 重新添加多边形
+      vectorLayer.getSource().addFeature(circleFeature); // 添加圆形
+
+      // 计算多边形和圆形的交集
+      var intersection = turf.intersect(poly1, turfCircle);
+
+      // 计算并显示交集面积
+      var intersectionArea = intersection ? turf.area(intersection) : 0; // 如果有交集，计算交集面积
+      document.getElementById("intersection-area").textContent = intersectionArea.toFixed(2); // 显示交集面积
+
+      // 计算交集面积占总面积的百分比
+      var intersectionPercentage = (intersectionArea / poly1Area) * 100; // 计算百分比
+      document.getElementById("intersection-percentage").textContent = intersectionPercentage.toFixed(2); // 显示百分比
+
+      // 如果有交集，添加交集区域到地图
+      if (intersection) {
+        var intersectionFeature = new ol.Feature({
+          geometry: new ol.geom.Polygon(
+            intersection.geometry.coordinates.map(ring =>
+              ring.map(coord => ol.proj.fromLonLat(coord)) // 将交集区域的经纬度转换为地图坐标
+            )
+          )
+        });
+
+        // 设置交集区域的样式
+        intersectionFeature.setStyle(
+          new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: "red", // 交集区域边界颜色为红色
+              width: 2
+            }),
+            fill: new ol.style.Fill({
+              color: "rgba(255,0,0,0.5)" // 交集区域填充颜色为半透明红色
+            })
+          })
+        );
+        vectorLayer.getSource().addFeature(intersectionFeature); // 将交集区域添加到地图
+      }
+    }
+  </script>
+</body>
+</html>
