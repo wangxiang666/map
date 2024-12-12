@@ -2,7 +2,7 @@
  * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-05 23:16:29
  * @LastEditors: wangxiang666 534167821@qq.com
- * @LastEditTime: 2024-12-10 23:22:35
+ * @LastEditTime: 2024-12-12 21:13:40
  * @FilePath: \map\src\main.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -37,7 +37,7 @@ directive(app);
 other.elSvg(app);
 
 app.component('pagination', pagination);
-app.use(pinia).use(uploader).use(router).use(ElementPlus).use(i18n).use(VueGridLayout).use(VueUeditorWrap).mount('#app');
+app.use(pinia).use(uploader).use(router).use(ElementPlus, { zIndex: 999999 }).use(i18n).use(VueGridLayout).use(VueUeditorWrap).mount('#app');
 
 app.config.globalProperties.getUpFileUrl = getUpFileUrl;
 app.config.globalProperties.handleTree = handleTree;

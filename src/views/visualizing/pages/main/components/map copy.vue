@@ -8,7 +8,7 @@
               virtual-triggering
               trigger="hover"
               placement="top"
-              :width="300"
+              :width="150"
               :show-after="500"
               popper-class="feature-popover">
     <template #default>
@@ -22,6 +22,19 @@
       </div>
     </template>
   </el-popover>
+
+  <!-- 添加抽屉组件 -->
+  <el-drawer v-model="drawerVisible"
+             title="要素属性"
+             size="30%"
+             :destroy-on-close="true">
+    <div v-if="selectedFeature">
+      <div v-for="(value, key) in selectedFeatureProps"
+           :key="key">
+        <strong>{{ key }}:</strong> {{ value }}
+      </div>
+    </div>
+  </el-drawer>
 </template>
 
 <script setup lang='ts'>
@@ -38,7 +51,7 @@ import GeoJSON from 'ol/format/GeoJSON';
 import XYZ from 'ol/source/XYZ';
 import { Fill, Stroke, Style } from 'ol/style';
 import Overlay from 'ol/Overlay';
-import { ElPopover } from 'element-plus';
+import { ElPopover, ElDrawer } from 'element-plus';
 import FullScreen from 'ol/control/FullScreen';
 import * as turf from '@turf/turf';
 import { MapBrowserEvent } from 'ol';
@@ -70,10 +83,15 @@ const virtualRef = reactive({
 const currentFeature = ref(null);
 const featureProperties = ref({});
 const mousePosition = reactive({ x: 0, y: 0 });
-const popoverRef = ref()
+const popoverRef = ref();
 
 // 在 script setup 顶部添加一个变量存储原始要素
 let originalFeatures: any[] = [];
+
+// 添加抽屉相关的响应式变量
+const drawerVisible = ref(false);
+const selectedFeature = ref(null);
+const selectedFeatureProps = ref({});
 
 const initOl = () => {
 	// WFS 数据源
@@ -102,18 +120,18 @@ const initOl = () => {
 		source: vectorSource,
 		style: new Style({
 			fill: new Fill({
-				color: 'rgba(255, 0, 0, 0.4)'
+				color: 'rgba(255, 0, 0, 0.4)',
 			}),
 			stroke: new Stroke({
 				color: '#ff0000',
-				width: 2
-			})
-		})
+				width: 2,
+			}),
+		}),
 	});
 	// WFS 数据源
 	const vectorSourceLine = new VectorSource({
 		format: new GeoJSON({
-				geometryName: 'geom',
+			geometryName: 'geom',
 		}),
 		url:
 			'/geoserver/taiwan/ows?' +
@@ -169,7 +187,7 @@ const initOl = () => {
 			zoom: 8,
 			projection: 'EPSG:4326',
 		}),
-			overlays: [popup], // 添加overlay到地图
+		overlays: [popup], // 添加overlay到地图
 	});
 
 	// 修改全屏控件的创建和处理
@@ -180,26 +198,27 @@ const initOl = () => {
 	});
 	// 监听全屏变化事件
 	document.addEventListener('fullscreenchange', () => {
+		// console.log('popoverRef',popoverRef.value.popperRef)
 		// 获取当前全屏元素
-    const fullscreenElement = document.fullscreenElement;
-    if (fullscreenElement) {
-      // 如果进入全屏，将 popover 重新挂载到全屏元素内
-      const popover = document.querySelector('.el-popper');
-      if (popover) {
-        fullscreenElement.appendChild(popover);
-      }
-    }else{
-      //如果退出全屏，将 popover 重新挂载到 body 内
-      const popover = document.querySelector('.el-popper');
-      if (popover) {
-        document.body.appendChild(popover);
-      }
-    }
+		const fullscreenElement = document.fullscreenElement;
+		if (fullscreenElement) {
+			// 如果进入全屏，将 popover 重新挂载到全屏元素内
+			const popover = document.querySelector('.el-popper');
+			if (popover) {
+				fullscreenElement.appendChild(popover);
+			}
+		} else {
+			//如果退出全屏，将 popover 重新挂载到 body 内
+			const popover = document.querySelector('.el-popper');
+			if (popover) {
+				document.body.appendChild(popover);
+			}
+		}
 	});
 	map.addControl(fullScreenControl);
 
 	// 修改点击事件处理
-	map.on('click', function(evt: MapBrowserEvent<MouseEvent>) {
+	map.on('click', function (evt: MapBrowserEvent<MouseEvent>) {
 		const coordinate = evt.coordinate;
 		console.log('点击位置经纬度:', coordinate);
 
@@ -207,71 +226,67 @@ const initOl = () => {
 		vectorLayerNode.getSource().clear();
 		// 创建圆形
 		const point = turf.point([coordinate[0], coordinate[1]]);
-		const circle = turf.circle(point, 10, { 
-				steps: 64,
-				units: 'kilometers'
+		const circle = turf.circle(point, 10, {
+			steps: 64,
+			units: 'kilometers',
 		});
 
 		const circleFeature = new GeoJSON().readFeature(circle);
-    circleFeature.setStyle(
-        new Style({
-          stroke: new Stroke({
-            color: "green",
-            width: 2
-          }),
-          fill: new Fill({
-            color: "rgba(0,255,0,0.2)"
-          })
-        })
-      );
+		console.log(circle);
+		circleFeature.setStyle(
+			new Style({
+				stroke: new Stroke({
+					color: 'green',
+					width: 2,
+				}),
+				fill: new Fill({
+					color: 'rgba(0,255,0,0.2)',
+				}),
+			})
+		);
 		// 重新添加原始要素并检查相交
-		originalFeatures.forEach(feature => {
+		originalFeatures.forEach((feature) => {
 			vectorLayerNode.getSource().addFeature(feature);
-      
-      // 将 OpenLayers Feature 转换为 GeoJSON 格式
-      const format = new GeoJSON();
-      const featureGeoJSON = format.writeFeatureObject(feature, {
-        featureProjection: 'EPSG:4326'
-      });
-      
-      // 确保我们有正确的 GeoJSON 格式
-      if (featureGeoJSON.geometry && featureGeoJSON.geometry.type === 'MultiPolygon') {
-        try {
-          // 将 MultiPolygon 的每个 Polygon 分别处理
-          const polygons = featureGeoJSON.geometry.coordinates.map(coords => {
-            return turf.polygon(coords);
-          });
 
-          // 对每个 Polygon 检查相交
-          polygons.forEach(polygon => {
-            const intersection = turf.intersect(polygon, circle);
-            if (intersection) {
-              console.log('Found intersection:', intersection,'相交面积：',turf.area(intersection));
-              // 如果需要可视化相交结果，可以将 intersection 转换为 OpenLayers feature 并添加到地图上
-              const intersectionFeature = new GeoJSON().readFeature(intersection);
-              intersectionFeature.setStyle(
-                new Style({
-                  stroke: new Stroke({
-                    color: "yellow",
-                    width: 2
-                  }),
-                  fill: new Fill({
-                    color: "rgba(255,255,0,1)"
-                  })
-                })
-              );
-              vectorLayerNode.getSource().addFeature(intersectionFeature);
-            }
-          });
-        } catch (error) {
-          console.warn('Error checking intersection:', error);
-        }
-      }
+			// 将 OpenLayers Feature 转换为 GeoJSON 格式
+			const format = new GeoJSON();
+			const featureGeoJSON = format.writeFeatureObject(feature, {
+				featureProjection: 'EPSG:4326',
+			});
+
+			// 确保我们有正确的 GeoJSON 格式
+			if (featureGeoJSON.geometry && featureGeoJSON.geometry.type === 'MultiPolygon') {
+				try {
+					// 将 MultiPolygon 转换为 Feature
+					const multiPolygonFeature = turf.multiPolygon(featureGeoJSON.geometry.coordinates);
+					// 现在可以使用 turf.intersect
+					const intersection = turf.intersect(multiPolygonFeature, circle);
+					if (intersection) {
+						console.log('Found intersection:', intersection, '相交面积：', turf.area(intersection));
+						// 这里可以处理相交的结果
+						const intersectionFeature = new GeoJSON().readFeature(intersection);
+						intersectionFeature.setStyle(
+							new Style({
+								stroke: new Stroke({
+									color: 'yellow',
+									width: 2,
+								}),
+								fill: new Fill({
+									color: 'rgba(255,255,0,1)',
+								}),
+							})
+						);
+						vectorLayerNode.getSource().addFeature(intersectionFeature);
+					}
+				} catch (error) {
+					// console.warn('Error checking intersection:', error);
+				}
+			}
 		});
 
 		vectorLayerNode.getSource().addFeature(circleFeature);
 	});
-  // 修改鼠标移动事件处理
+	// 修改鼠标移动事件处理
 	map.on('pointermove', function (evt: MapBrowserEvent<MouseEvent>) {
 		const pixel = evt.pixel;
 		const feature = map.forEachFeatureAtPixel(pixel, function (feature) {
@@ -286,9 +301,18 @@ const initOl = () => {
 		}
 
 		if (feature) {
+			console.log('当前要素：', feature, feature.getProperties());
+			const layer = feature.get('layer');
+			// console.log('当前图层：', layer);
 			// 更新当前要素和属性
 			currentFeature.value = feature;
-			featureProperties.value = feature.getProperties();
+			const { name } = feature.getProperties();
+			featureProperties.value = {
+				名称: name,
+				经度: evt.coordinate[0].toFixed(6),
+				纬度: evt.coordinate[1].toFixed(6),
+			};
+
 			popoverVisible.value = true;
 			// 设置鼠标样式
 			if (mapElement) {
@@ -309,6 +333,26 @@ const initOl = () => {
 	// 添加地图移动事件处理，关闭popover
 	map.on('movestart', () => {
 		popoverVisible.value = false;
+	});
+
+	// 添加双击事件处理
+	map.on('dblclick', function (evt: MapBrowserEvent<MouseEvent>) {
+		const pixel = evt.pixel;
+		const feature = map.forEachFeatureAtPixel(pixel, function (feature) {
+			return feature;
+		});
+
+		if (feature) {
+			// 阻止地图缩放
+			evt.preventDefault();
+
+			// 更新选中的要素和属性
+			selectedFeature.value = feature;
+			selectedFeatureProps.value = feature.getProperties();
+
+			// 显示抽屉
+			drawerVisible.value = true;
+		}
 	});
 };
 </script>
