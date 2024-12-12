@@ -8,7 +8,7 @@
               virtual-triggering
               trigger="hover"
               placement="top"
-              :width="300"
+              :width="150"
               :show-after="500"
               popper-class="feature-popover">
     <template #default>
@@ -283,9 +283,18 @@ const initOl = () => {
 		}
 
 		if (feature) {
+      console.log('当前要素：', feature,feature.getProperties());
+      const layer = feature.get('layer');
+      // console.log('当前图层：', layer);
 			// 更新当前要素和属性
 			currentFeature.value = feature;
-			featureProperties.value = feature.getProperties();
+      const {name} = feature.getProperties();
+			featureProperties.value = {
+        '名称':name,
+        '经度':evt.coordinate[0].toFixed(6),
+        '纬度':evt.coordinate[1].toFixed(6),
+      };
+
 			popoverVisible.value = true;
 			// 设置鼠标样式
 			if (mapElement) {
