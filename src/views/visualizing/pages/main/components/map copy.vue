@@ -180,7 +180,6 @@ const initOl = () => {
 	});
 	// 监听全屏变化事件
 	document.addEventListener('fullscreenchange', () => {
-    // console.log('popoverRef',popoverRef.value.popperRef)
 		// 获取当前全屏元素
     const fullscreenElement = document.fullscreenElement;
     if (fullscreenElement) {
@@ -214,7 +213,6 @@ const initOl = () => {
 		});
 
 		const circleFeature = new GeoJSON().readFeature(circle);
-    console.log(circle)
     circleFeature.setStyle(
         new Style({
           stroke: new Stroke({
@@ -239,14 +237,18 @@ const initOl = () => {
       // 确保我们有正确的 GeoJSON 格式
       if (featureGeoJSON.geometry && featureGeoJSON.geometry.type === 'MultiPolygon') {
         try {
-          // 将 MultiPolygon 转换为 Feature
-          const multiPolygonFeature = turf.multiPolygon(featureGeoJSON.geometry.coordinates);
-          // 现在可以使用 turf.intersect
-          const intersection = turf.intersect(multiPolygonFeature, circle);
-          if (intersection) {
-            console.log('Found intersection:', intersection,'相交面积：',turf.area(intersection));
-            // 这里可以处理相交的结果
-            const intersectionFeature = new GeoJSON().readFeature(intersection);
+          // 将 MultiPolygon 的每个 Polygon 分别处理
+          const polygons = featureGeoJSON.geometry.coordinates.map(coords => {
+            return turf.polygon(coords);
+          });
+
+          // 对每个 Polygon 检查相交
+          polygons.forEach(polygon => {
+            const intersection = turf.intersect(polygon, circle);
+            if (intersection) {
+              console.log('Found intersection:', intersection,'相交面积：',turf.area(intersection));
+              // 如果需要可视化相交结果，可以将 intersection 转换为 OpenLayers feature 并添加到地图上
+              const intersectionFeature = new GeoJSON().readFeature(intersection);
               intersectionFeature.setStyle(
                 new Style({
                   stroke: new Stroke({
@@ -259,9 +261,10 @@ const initOl = () => {
                 })
               );
               vectorLayerNode.getSource().addFeature(intersectionFeature);
-          }
+            }
+          });
         } catch (error) {
-          // console.warn('Error checking intersection:', error);
+          console.warn('Error checking intersection:', error);
         }
       }
 		});
