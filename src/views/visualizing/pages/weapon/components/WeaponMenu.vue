@@ -7,33 +7,41 @@
       <div v-for="item in category.items"
            :key="item"
            class="menu-item"
-           @click="$emit('select', item)">
-        <!-- 菜单项图标占位 -->
-        <!-- <img :src="`/icons/${item}.png`" class="item-icon"> -->
-        <span>{{ item }}</span>
+           :class="{ active: item.title === activeItem }"
+           @click="menuChange(category.title,item)">
+        <span>{{ item.title }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { onMounted, ref } from 'vue';
+const emit = defineEmits(['select'])
+const props = defineProps({
   categories: {
     type: Array,
     required: true
   }
 })
-
-defineEmits(['select'])
+const activeItem = ref('')
+onMounted(() => {
+  activeItem.value = props.categories[0].items[0].title
+  emit('select', props.categories[0].title, props.categories[0].items[0].type)
+})
+const menuChange = (damageType, weapon) => {
+  activeItem.value = weapon.title
+  emit('select', damageType, weapon.type)
+}
 </script>
 
 <style lang="scss" scoped>
 .menu-container {
 	width: 414px;
-	background: url('../../../images/leftMenu.jpg') no-repeat;
+	background: url('../../../images/leftMenu.png') no-repeat;
 	background-size: 100% 100%;
 	padding: 15px;
-	font-size: 42px;
+	font-size: 36px;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -51,13 +59,13 @@ defineEmits(['select'])
 }
 
 .menu-item {
-	height: 118px;
-	font-size: 24px;
+	height: 84px;
+	font-size: 18px;
 	text-align: center;
-	line-height: 84px;
+	line-height: 56px;
 	font-style: italic;
 	padding: 8px;
-	background: url('../../../images/menuBtn.jpg') no-repeat;
+	background: url('../../../images/menuBtn.png') no-repeat;
 	background-size: 100% 100%;
 	cursor: pointer;
 	transition: all 0.3s;
@@ -65,7 +73,10 @@ defineEmits(['select'])
 		transform: scale(1.1);
 	}
 }
-
+.active {
+	color: #1890ff;
+	font-weight: bold;
+}
 .item-icon {
 	width: 20px;
 	height: 20px;

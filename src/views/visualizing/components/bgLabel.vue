@@ -22,7 +22,7 @@ defineProps({
 </script>
 <style lang="scss" scoped>
 .bg-label {
-	background: url('../images/bg-label.jpg') no-repeat;
+	background: url('../images/bg-label.png') no-repeat;
 	background-size: 100% 100%;
 	width: var(--width);
 	height: var(--height);

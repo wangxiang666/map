@@ -1,57 +1,52 @@
 <template>
-  <div id="olMap">
-    <!-- 添加自定义全屏按钮 -->
-    <div class="custom-fullscreen"
-         @click="toggleFullScreen">
-      <el-icon>
-        <ele-Close v-if="isFullScreen" />
-        <ele-FullScreen v-else />
-      </el-icon>
-      <!-- <i :class="isFullScreen ? 'el-icon-close' : 'el-icon-full-screen'"></i> -->
-    </div>
-  </div>
+	<div id="olMap">
+		<!-- 添加自定义全屏按钮 -->
+		<div class="custom-tool custom-search" @click="searchMap">
+			<el-icon>
+				<ele-Search />
+			</el-icon>
+			<!-- <i :class="isFullScreen ? 'el-icon-close' : 'el-icon-full-screen'"></i> -->
+		</div>
+		<div class="custom-tool custom-fullscreen" @click="toggleFullScreen">
+			<el-icon>
+				<ele-Close v-if="isFullScreen" />
+				<ele-FullScreen v-else />
+			</el-icon>
+			<!-- <i :class="isFullScreen ? 'el-icon-close' : 'el-icon-full-screen'"></i> -->
+		</div>
+	</div>
 
-  <!-- 使用 element-plus 的 popover -->
-  <el-popover ref="popoverRef"
-              :visible="popoverVisible"
-              :virtual-ref="virtualRef"
-              virtual-triggering
-              trigger="hover"
-              placement="top"
-              :width="150"
-              :show-after="500"
-              popper-class="feature-popover">
-    <template #default>
-      <div v-if="currentFeature">
-        <div v-for="(value, key) in featureProperties"
-             :key="key">
-          <template v-if="key !== 'geometry' && key !== 'geom'">
-            <strong>{{ key }}:</strong> {{ value }}
-          </template>
-        </div>
-      </div>
-    </template>
-  </el-popover>
-
-  <!-- 添加抽屉组件 -->
-  <el-drawer v-model="drawerVisible"
-             modal-class="vector-drawer"
-             title="要素属性"
-             size="30%"
-             :destroy-on-close="true">
-    <div v-if="selectedFeature">
-      <div v-for="(value, key) in selectedFeatureProps"
-           :key="key">
-        <strong>{{ key }}:</strong> {{ value }}
-      </div>
-    </div>
-  </el-drawer>
+	<!-- 使用 element-plus 的 popover -->
+	<el-popover
+		ref="popoverRef"
+		:visible="popoverVisible"
+		:virtual-ref="virtualRef"
+		virtual-triggering
+		trigger="hover"
+		placement="top"
+		:width="150"
+		:show-after="500"
+		popper-class="feature-popover"
+	>
+		<template #default>
+			<div v-if="currentFeature">
+				<div v-for="(value, key) in featureProperties" :key="key">
+					<template v-if="key !== 'geometry' && key !== 'geom'">
+						<strong>{{ key }}:</strong> {{ value }}
+					</template>
+				</div>
+			</div>
+		</template>
+	</el-popover>
+	<operateDrawer ref="drawerRef" />
+	<searchDrawer ref="seachRef" @search-change="searchChange" />
 </template>
 
-<script setup lang='ts'>
+<script setup lang="ts">
+import operateDrawer from './operateDrawer.vue';
+import searchDrawer from './searchDrawer.vue';
 import { onMounted, onBeforeUnmount, ref, reactive, nextTick } from 'vue';
 import { NextLoading } from '/@/utils/loading';
-
 import 'ol/ol.css';
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -62,7 +57,6 @@ import GeoJSON from 'ol/format/GeoJSON';
 import XYZ from 'ol/source/XYZ';
 import { Fill, Stroke, Style } from 'ol/style';
 import Overlay from 'ol/Overlay';
-import { ElPopover, ElDrawer } from 'element-plus';
 import * as turf from '@turf/turf';
 import { MapBrowserEvent } from 'ol';
 
@@ -96,12 +90,10 @@ const mousePosition = reactive({ x: 0, y: 0 });
 const popoverRef = ref();
 
 // 在 script setup 顶部添加一个变量存储原始要素
-let originalFeatures: any[] = [];
+let originalNodeFeatures: any[] = [];
+let originalLineFeatures: any[] = [];
 
-// 添加抽屉相关的响应式变量
-const drawerVisible = ref(false);
 const selectedFeature = ref(null);
-const selectedFeatureProps = ref({});
 
 // 添加全屏状态控制
 const isFullScreen = ref(false);
@@ -144,7 +136,10 @@ const toggleFullScreen = () => {
 		});
 	}
 };
-
+const drawerRef = ref();
+const openDrawer = () => {
+	drawerRef.value.open(selectedFeature.value);
+};
 const initOl = () => {
 	// WFS 数据源
 	const vectorSource = new VectorSource({
@@ -164,8 +159,9 @@ const initOl = () => {
 	// 监听数据加载完成事件
 	vectorSource.once('featuresloadend', () => {
 		// 保存原始要素
-		originalFeatures = vectorSource.getFeatures();
+		originalNodeFeatures = vectorSource.getFeatures();
 	});
+	
 
 	// WFS 图层
 	const vectorLayerNode = new VectorLayer({
@@ -180,6 +176,7 @@ const initOl = () => {
 			}),
 		}),
 	});
+
 	// WFS 数据源
 	const vectorSourceLine = new VectorSource({
 		format: new GeoJSON({
@@ -194,13 +191,17 @@ const initOl = () => {
 			'outputFormat=application/json&' +
 			'srsName=EPSG:4326',
 	});
+  vectorSourceLine.once('featuresloadend', () => {
+		// 保存原始要素
+		originalLineFeatures = vectorSourceLine.getFeatures();
+	});
 	// WFS 图层
 	const vectorLayerLine = new VectorLayer({
 		source: vectorSourceLine,
 		style: new Style({
 			stroke: new Stroke({
 				color: 'blue',
-				width: 2,
+				width: 3,
 			}),
 		}),
 	});
@@ -245,19 +246,17 @@ const initOl = () => {
 	// 修改点击事件处理
 	map.on('click', function (evt: MapBrowserEvent<MouseEvent>) {
 		const coordinate = evt.coordinate;
-		console.log('点击位置经纬度:', coordinate);
 
 		// 清除所有要素
 		vectorLayerNode.getSource().clear();
 		// 创建圆形
 		const point = turf.point([coordinate[0], coordinate[1]]);
-		const circle = turf.circle(point, 10, {
+		const circle = turf.circle(point, 88, {
 			steps: 64,
-			units: 'kilometers',
+			units: 'meters',
 		});
 
 		const circleFeature = new GeoJSON().readFeature(circle);
-		console.log(circle);
 		circleFeature.setStyle(
 			new Style({
 				stroke: new Stroke({
@@ -270,7 +269,7 @@ const initOl = () => {
 			})
 		);
 		// 重新添加原始要素并检查相交
-		originalFeatures.forEach((feature) => {
+		originalNodeFeatures.forEach((feature) => {
 			vectorLayerNode.getSource().addFeature(feature);
 
 			// 将 OpenLayers Feature 转换为 GeoJSON 格式
@@ -287,7 +286,7 @@ const initOl = () => {
 					// 现在可以使用 turf.intersect
 					const intersection = turf.intersect(multiPolygonFeature, circle);
 					if (intersection) {
-						console.log('Found intersection:', intersection, '相交面积：', turf.area(intersection));
+						// console.log('Found intersection:', intersection, '相交面积：', turf.area(intersection));
 						// 这里可以处理相交的结果
 						const intersectionFeature = new GeoJSON().readFeature(intersection);
 						intersectionFeature.setStyle(
@@ -304,7 +303,7 @@ const initOl = () => {
 						vectorLayerNode.getSource().addFeature(intersectionFeature);
 					}
 				} catch (error) {
-					// console.warn('Error checking intersection:', error);
+					console.warn('Error checking intersection:', error);
 				}
 			}
 		});
@@ -326,7 +325,6 @@ const initOl = () => {
 		}
 
 		if (feature) {
-			console.log('当前要素：', feature, feature.getProperties());
 			const layer = feature.get('layer');
 			// console.log('当前图层：', layer);
 			// 更新当前要素和属性
@@ -363,26 +361,58 @@ const initOl = () => {
 	// 添加双击事件处理
 	map.on('dblclick', function (evt: MapBrowserEvent<MouseEvent>) {
 		const pixel = evt.pixel;
-		const feature = map.forEachFeatureAtPixel(pixel, function (feature) {
-			return feature;
+		const features: any[] = [];
+		map.forEachFeatureAtPixel(pixel, function (feature) {
+			features.push(feature);
 		});
 
-		if (feature) {
+		if (features.length) {
 			// 阻止地图缩放
 			evt.preventDefault();
-
 			// 更新选中的要素和属性
-			selectedFeature.value = feature;
-			selectedFeatureProps.value = feature.getProperties();
-
+			selectedFeature.value = features[features.length - 1];
+			openDrawer();
 			// 显示抽屉
-			drawerVisible.value = true;
 		}
 	});
 };
+const searchChange = (query: any) => {
+	console.log(query);
+	let filterFeature: any[] = [];
+	let paramsKey = [];
+	if (query.searchType === 'node') {
+		filterFeature = originalNodeFeatures.filter((feature: any) => {
+			let flag = true;
+			paramsKey = ['addr_provi', 'name', 'name_zh', 'rating', 'voltage', 'flag', 'plant_outp', 'plant_sour'];
+      for (let i = 0; i < paramsKey.length; i++) {
+					if (feature.get(paramsKey[i]).indexOf(query[paramsKey[i]])===-1) {
+						flag = false;
+						break;
+					}
+				}
+        return flag;
+		});
+	}else{
+    filterFeature = originalLineFeatures.filter((feature: any) => {
+			let flag = true;
+			paramsKey = [ 'name', 'voltage'];
+      for (let i = 0; i < paramsKey.length; i++) {
+					if (feature.get(paramsKey[i]).indexOf(query[paramsKey[i]])===-1) {
+            flag = false;
+            break;
+          }
+      }
+      return flag;
+    })
+  }
+};
+const seachRef = ref();
+const searchMap = () => {
+	seachRef.value.open();
+};
 </script>
 
-<style lang='scss' scoped>
+<style lang="scss" scoped>
 #olMap {
 	width: 100%;
 	height: 100%;
@@ -403,10 +433,9 @@ const initOl = () => {
 }
 
 // 替换原有的全屏按钮样式
-.custom-fullscreen {
+.custom-tool {
 	position: absolute;
 	top: 5px;
-	right: 0.5em;
 	background-color: rgba(255, 255, 255, 1);
 	border-radius: 4px;
 	padding: 2px;
@@ -423,7 +452,10 @@ const initOl = () => {
 		padding: 5px;
 	}
 }
-:deep(.vector-drawer) {
-	z-index: 9999999 !important;
+.custom-fullscreen {
+	right: 10px;
+}
+.custom-search {
+	right: 40px;
 }
 </style>

@@ -43,25 +43,6 @@
                 </el-card>
             </el-col>
 
-            <!-- 消息通知 -->
-            <!-->
-            <el-col :xs="24" :sm="8" class="pl15 personal-info">
-                <el-card shadow="hover">
-                    <template #header>
-                        <span>消息通知</span>
-                        <span class="personal-info-more">更多</span>
-                    </template>
-                    <div class="personal-info-box">
-                        <ul class="personal-info-ul">
-                            <li v-for="(v, k) in newsInfoList" :key="k" class="personal-info-li">
-                                <a :href="v.link" target="_block" class="personal-info-li-title">{{ v.title }}</a>
-                            </li>
-                        </ul>
-                    </div>
-                </el-card>
-            </el-col>
-            <-->
-
             <!-- 营销推荐 -->
             <el-col :span="24">
                 <el-card shadow="hover" class="mt15" header="营销推荐">

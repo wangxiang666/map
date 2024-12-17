@@ -1,9 +1,9 @@
 <!--
  * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-08 20:58:42
- * @LastEditors: wangxiang666 534167821@qq.com
- * @LastEditTime: 2024-12-11 20:20:10
- * @FilePath: \map\src\views\visualizing\screen.vue
+ * @LastEditors: 王翔
+ * @LastEditTime: 2024-12-17 17:17:17
+ * @FilePath: /es-big-screen/Users/wangxiang/ownSystem/map/src/views/visualizing/screen.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
@@ -17,12 +17,10 @@
     <div class="armory-container"
          :class="{'main-bg': [0,1].indexOf(curentScreen.activeIndex)>-1 , 'main-bg-no-light': curentScreen.activeIndex === 5}">
       <div class="title">
-        <div class="title-text-box"
-             :style="{fontSize: curentScreen.title.length >6 ?'24px':'46px'}">
-          <span class="title-text"
-                v-for="(font,index) in curentScreen.title"
-                :key="font+index"
-                @click="handleScreenMenu({title: '大屏', activeIndex: 0})">{{font}}</span>
+        <div class="title-text-box">
+          <p class="title-text">电能源系统毁伤与防御模拟仿真</p>
+          <p class="title-text">及推演评估软件系统</p>
+
         </div>
         <div class="bg-menu bg-menu-left">
           <div class="bg-menu-item"
@@ -80,7 +78,7 @@ const screenMenuLeft = ref([
   },
   {
     activeIndex: 2,
-    title: '武器库'
+    title: '毁伤与防御模型'
   },
   {
     activeIndex: 3,
@@ -126,7 +124,6 @@ const debounce = (func, wait) => {
   };
 };
 const setScale = () => {
-  console.log(window.innerWidth, window.innerHeight)
   scaleX.value = window.innerWidth / w.value
   scaleY.value = window.innerHeight / h.value
 }
@@ -146,7 +143,14 @@ onUnmounted(() => {
 	width: 100vw;
 	height: 100vh;
 	:deep(.el-input__wrapper) {
-		background: url('./images/formInput.jpg') no-repeat;
+		background: url('./images/formInput.png') no-repeat;
+		background-size: 100% 100%;
+		box-shadow: none !important;
+		border: 1px solid #0a5999;
+		padding: 0 36px;
+	}
+	:deep(.el-textarea__inner) {
+		background: url('./images/formInput.png') no-repeat;
 		background-size: 100% 100%;
 		box-shadow: none !important;
 		border: 1px solid #0a5999;
@@ -159,7 +163,11 @@ onUnmounted(() => {
 	}
 
 	:deep(.el-input__inner) {
-		color: #1890ff;
+		color: #fff;
+		font-size: 16px;
+	}
+	:deep(.el-textarea__inner) {
+		color: #fff;
 		font-size: 16px;
 	}
 
@@ -173,15 +181,15 @@ onUnmounted(() => {
 	transform: scale(var(--scaleX), var(--scaleY));
 	transform-origin: 0 0;
 	position: relative;
-	background: url('./images/screen-bg.jpg') no-repeat;
+	background: url('./images/screen-bg.png') no-repeat;
 	background-size: 100% 100%;
 
 	&.main-bg {
-		background: url('./images/screenBg2.jpg') no-repeat;
+		background: url('./images/screenBg2.png') no-repeat;
 		background-size: 100% 100%;
 	}
 	&.main-bg-no-light {
-		background: url('./images/bg-no-light.jpg') no-repeat;
+		background: url('./images/bg-no-light.png') no-repeat;
 		background-size: 100% 100%;
 	}
 }
@@ -190,7 +198,7 @@ onUnmounted(() => {
 	width: 100%;
 	height: 264px;
 	text-align: center;
-	background: url('./images/title.jpg') no-repeat;
+	background: url('./images/title.png') no-repeat;
 	background-size: 100% 100%;
 	position: absolute;
 	top: 0;
@@ -200,9 +208,11 @@ onUnmounted(() => {
 	.title-text-box {
 		width: 500px;
 		height: 86px;
+		font-size: 28px;
 		display: flex;
-		justify-content: space-between;
-		flex-wrap: wrap;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
 	}
 	.title-text {
 		font-weight: bold;
@@ -225,13 +235,17 @@ onUnmounted(() => {
 	.bg-menu-item {
 		width: 117px;
 		height: 40px;
-		background: url('./images/bgMenu.jpg') no-repeat;
+		background: url('./images/bgMenu.png') no-repeat;
 		background-size: 100% 100%;
 		cursor: pointer;
 		text-align: center;
 		line-height: 40px;
 		color: #ffffff;
 		font-size: 16px;
+		transition: all 0.3s;
+		&:hover {
+			transform: scale(1.1);
+		}
 	}
 }
 .bg-menu-left {
@@ -249,8 +263,24 @@ onUnmounted(() => {
 	padding: 0 22px;
 }
 :deep(.bg-form-btn) {
-	background: url('./images/bgFormBtn.jpg') no-repeat;
+	background: url('./images/bgFormBtn.png') no-repeat;
 	background-size: 100% 100%;
 	border: none;
+}
+:deep(.search-form-btn) {
+	background: url('./images/search-btn.png') no-repeat;
+	background-size: 100% 100%;
+	padding: 12px 26px;
+	border: none;
+	transition: all 0.3s;
+	&:hover {
+		opacity: 0.8;
+	}
+}
+:deep(.el-drawer) {
+	background-color: rgba(21, 40, 91, 0.9);
+	.el-drawer__header {
+		color: #fff;
+	}
 }
 </style>

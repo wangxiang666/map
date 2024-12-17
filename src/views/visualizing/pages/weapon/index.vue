@@ -1,9 +1,9 @@
 <!--
  * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-10 20:08:00
- * @LastEditors: wangxiang666 534167821@qq.com
- * @LastEditTime: 2024-12-11 12:00:04
- * @FilePath: \map\src\views\visualizing\pages\weapon\index.vue
+ * @LastEditors: 王翔
+ * @LastEditTime: 2024-12-17 17:09:07
+ * @FilePath: /es-big-screen/Users/wangxiang/ownSystem/map/src/views/visualizing/pages/weapon/index.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
@@ -14,44 +14,65 @@
                    @select="handleCategorySelect" />
 
       <!-- 右侧武器展示区 -->
-      <weapon-display :weapons="weapons" />
+      <weapon-display ref="weaponDisplayRef" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import WeaponMenu from './components/WeaponMenu.vue'
 import WeaponDisplay from './components/WeaponDisplay.vue'
 
 const categories = ref([
   {
     title: '硬毁伤',
-    items: ['石墨烯炸弹', '电磁脉冲弹']
+    items: [
+      {
+        title: '石墨烯炸弹',
+        type: 1
+      },
+      {
+        title: '风幕',
+        type: 3
+      },
+      {
+        title: '电磁脉冲弹',
+        type: 2
+      },
+      {
+        title: '屏蔽柜',
+        type: 4
+      }
+    ]
   },
   {
     title: '信息毁伤',
-    items: ['指令注入', '数据篡改', '中间人攻击']
+    items: [
+      {
+        title: '指令注入',
+        type: 5
+      },
+      {
+        title: '数据篡改',
+        type: 6
+      },
+      {
+        title: '中间人攻击',
+        type: 7
+      },
+      {
+        title: '防火墙',
+        type: 8
+      }]
   }
 ])
-
-const weapons = ref([
-  {
-    id: 1,
-    name: '石墨烯型号1',
-    image: '/weapons/weapon1.png'
-  },
-  {
-    id: 2,
-    name: '石墨烯型号2',
-    image: '/weapons/weapon2.png'
-  },
-  {
-    id: 3,
-    name: '石墨烯型号3',
-    image: '/weapons/weapon3.png'
-  }
-])
+const weaponDisplayRef = ref()
+const handleCategorySelect = (damageType, weaponType) => {
+  nextTick(() => {
+    weaponDisplayRef.value.getWeaponData(damageType, weaponType)
+  })
+}
 </script>
 
 <style lang="scss" scoped>

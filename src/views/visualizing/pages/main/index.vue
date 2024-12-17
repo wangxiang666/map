@@ -1,9 +1,9 @@
 <!--
  * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-10 20:13:20
- * @LastEditors: wangxiang666 534167821@qq.com
- * @LastEditTime: 2024-12-11 18:20:03
- * @FilePath: \map\src\views\visualizing\pages\main\index.vue
+ * @LastEditors: 王翔
+ * @LastEditTime: 2024-12-13 09:21:19
+ * @FilePath: /es-big-screen/Users/wangxiang/ownSystem/map/src/views/visualizing/pages/main/index.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
@@ -14,6 +14,7 @@
       </div>
       <div class="bg-module bg-border">
         <bgLabel label="毁伤模型"></bgLabel>
+        <destroy-model></destroy-model>
       </div>
     </div>
     <div class="main-center">
@@ -34,6 +35,7 @@
 <script setup>
 import mainScreen from './components/map.vue'
 import bgLabel from '/@/views/visualizing/components/bgLabel.vue'
+import destroyModel from './components/destroyModel.vue'
 </script>
 <style lang="scss" scoped>
 .main-screen {
@@ -47,11 +49,11 @@ import bgLabel from '/@/views/visualizing/components/bgLabel.vue'
 	.main-right {
 		width: 440px;
 		height: 928px;
-		background: url('../../images/border-right.jpg') no-repeat;
+		background: url('../../images/border-right.png') no-repeat;
 		background-size: 100% 100%;
 	}
 	.bg-border {
-		background: url('../../images/border-left.jpg') no-repeat;
+		background: url('../../images/border-left.png') no-repeat;
 		background-size: 100% 100%;
 
 		// justify-content: center;
@@ -68,7 +70,7 @@ import bgLabel from '/@/views/visualizing/components/bgLabel.vue'
 	.main-center {
 		flex: 1;
 		height: 890px;
-		background: url('../../images/border-center.jpg') no-repeat;
+		background: url('../../images/border-center.png') no-repeat;
 		background-size: 100% 100%;
 		.map-container-box {
 			width: calc(100% - 20px);

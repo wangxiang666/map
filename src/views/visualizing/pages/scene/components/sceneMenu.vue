@@ -38,7 +38,7 @@ defineEmits(['select'])
 <style lang="scss" scoped>
 .menu-container {
 	width: 440px;
-	background: url('../../../images/border-left.jpg') no-repeat;
+	background: url('../../../images/border-left.png') no-repeat;
 	background-size: 100% 100%;
 	padding: 15px;
 	font-size: 42px;
@@ -65,7 +65,7 @@ defineEmits(['select'])
 	line-height: 84px;
 	font-style: italic;
 	padding: 8px;
-	background: url('../../../images/menuBtn.jpg') no-repeat;
+	background: url('../../../images/menuBtn.png') no-repeat;
 	background-size: 100% 100%;
 }
 .menu-item {

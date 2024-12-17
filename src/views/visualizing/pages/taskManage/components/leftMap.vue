@@ -20,7 +20,7 @@ import mainScreen from '/@/views/visualizing/pages/main/components/map.vue'
 .left-map {
 	width: 743px;
 	height: 100%;
-	background: url('../../../images/mapContainer.jpg') no-repeat;
+	background: url('../../../images/mapContainer.png') no-repeat;
 	background-size: 100% 100%;
 	padding: 20px 28px 20px 48px;
 	.map-container {
