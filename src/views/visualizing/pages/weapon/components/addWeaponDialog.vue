@@ -4,50 +4,53 @@
                width="769px"
                :close-on-click-modal="false"
                :destroy-on-close="true">
-      <el-form ref="formRef"
-               :model="formData"
-               label-width="90px">
-        <el-form-item label="名称"
-                      prop="name">
-          <el-input v-model="formData.name"
-                    placeholder="请输入名称" />
-        </el-form-item>
-        <!-- <el-form-item label="毁伤类型"
-                      prop="damageType">
-          <el-select v-model="formData.damageType"
-                     placeholder="请选择毁伤类型">
-            <el-option label="硬毁伤"
-                       value="硬毁伤" />
-            <el-option label="信息毁伤"
-                       value="信息毁伤" />
-          </el-select>
-        </el-form-item> -->
-        <el-form-item label="图片"
-                      prop="image">
-          <el-upload v-model:file-list="fileList"
-                     class="upload-demo"
-                     :on-preview="handlePreview"
-                     :on-remove="handleRemove"
-                     :on-change="(file) => {fileList = file.rawFileList }"
-                     :limit="1"
-                     :auto-upload="false"
-                     list-type="picture-card">
-            <el-icon class="avatar-uploader-icon"><ele-Plus /></el-icon>
-          </el-upload>
-        </el-form-item>
-        <el-form-item label="描述"
-                      prop="note">
-          <el-input v-model="formData.note"
-                    type="textarea"
-                    :rows="4"
-                    placeholder="请输入描述" />
-        </el-form-item>
-      </el-form>
+      <template #header>
+        <div class="step-title">{{stepTitle[step]}}</div>
+      </template>
+      <div class="form-content">
+        <el-form ref="formRef"
+                 v-show="step===0"
+                 :model="formData"
+                 label-width="90px">
+          <el-form-item label="名称"
+                        prop="name">
+            <el-input v-model="formData.name"
+                      placeholder="请输入名称" />
+          </el-form-item>
+          <el-form-item label="图片"
+                        prop="image">
+            <el-upload v-model:file-list="fileList"
+                       class="upload-demo"
+                       :on-preview="handlePreview"
+                       :on-remove="handleRemove"
+                       :on-change="(file) => {fileList = file.rawFileList }"
+                       :limit="1"
+                       :auto-upload="false"
+                       list-type="picture-card">
+              <el-icon class="avatar-uploader-icon"><ele-Plus /></el-icon>
+            </el-upload>
+          </el-form-item>
+          <el-form-item label="描述"
+                        prop="note">
+            <el-input v-model="formData.note"
+                      type="textarea"
+                      :rows="4"
+                      placeholder="请输入描述" />
+          </el-form-item>
+        </el-form>
+
+        <div class="right-small-box"></div>
+      </div>
       <template #footer>
         <div class="dialog-footer">
+          <el-button class="search-form-btn"
+                     type="primary"
+                     @click="preStep"
+                     v-if="step>0">上一步</el-button>
           <el-button type="primary"
+                     class="search-form-btn"
+                     v-if="step<6"
                      @click="nextStep">下一步</el-button>
-          <el-button @click="">上一步</el-button>
         </div>
       </template>
     </el-dialog>
@@ -60,7 +63,7 @@
   </div>
 </template>
 <script setup>
-import { ref, getCurrentInstance } from 'vue';
+import { ref } from 'vue';
 import { getAssaultWeaponMgr, addAssaultWeaponMgr, updateAssaultWeaponMgr } from '/@/api/sim/AssaultWeaponMgr';
 import { ElMessage } from 'element-plus';
 const props = defineProps({
@@ -71,7 +74,15 @@ const fileList = ref([])
 const handleRemove = (uploadFile, uploadFiles) => {
   // console.log(uploadFile, uploadFiles)
 }
-
+const stepTitle = ref([
+  '攻击武器管理',
+  '导电丝束长度与完全展开时间关系',
+  '导电丝束长度与完全展开时间关系',
+  '引信引爆高度与引爆时间关系',
+  '导电丝束水平移动距离与时间关系',
+  '子弹带伞水平移动距离',
+  '散布面积俯视图',
+])
 const dialogImageUrl = ref('')
 const dialogVisible = ref(false)
 const handlePreview = (file) => {
@@ -101,6 +112,20 @@ const openDialog = (row) => {
 const formRef = ref()
 const loading = ref(false);
 const emit = defineEmits(['AssaultWeaponMgrList']);
+
+const step = ref(0)
+
+const nextStep = () => {
+  if (step.value === 0) {
+    onSubmit();
+  } else {
+
+  }
+  step.value++
+};
+const preStep = () => {
+  step.value--
+};
 // 提交
 const onSubmit = () => {
   const formWrap = formRef.value;
@@ -157,29 +182,6 @@ defineExpose({
 });
 </script>
 <style scoped lang="scss">
-.sim-AssaultWeaponMgr-edit :deep(.avatar-uploader .avatar) {
-	width: 178px;
-	height: 178px;
-	display: block;
-}
-.sim-AssaultWeaponMgr-edit :deep(.avatar-uploader .el-upload) {
-	border: 1px dashed var(--el-border-color);
-	border-radius: 6px;
-	cursor: pointer;
-	position: relative;
-	overflow: hidden;
-	transition: var(--el-transition-duration-fast);
-}
-.sim-AssaultWeaponMgr-edit :deep(.avatar-uploader .el-upload:hover) {
-	border-color: var(--el-color-primary);
-}
-.sim-AssaultWeaponMgr-edit :deep(.el-icon.avatar-uploader-icon) {
-	font-size: 28px;
-	color: #1c71e8;
-	width: 178px;
-	height: 178px;
-	text-align: center;
-}
 :deep(.el-dialog) {
 	background: url('../../../images/weapon-step.png') no-repeat;
 	background-size: 100% 100%;
@@ -187,6 +189,41 @@ defineExpose({
 :deep(.preview-dialog) {
 	.el-dialog__body {
 		overflow-x: auto;
+	}
+}
+.dialog-footer {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-bottom: 50px;
+}
+:deep(.el-dialog) {
+	--el-dialog-padding-primary: 4px 10px;
+}
+:deep(.el-dialog__headerbtn) {
+	right: 50px;
+	.el-dialog__close {
+		color: #fff;
+	}
+}
+.step-title {
+	text-align: center;
+	height: 40px;
+	line-height: 58px;
+}
+.form-content {
+	height: 496px;
+	padding: 0 70px 0 20px;
+	overflow: visible;
+	position: relative;
+	.right-small-box {
+		width: 302px;
+		height: 252px;
+		background: url('../../../images/weapon-step-small.png') no-repeat;
+		background-size: 100% 100%;
+		position: absolute;
+		top: 100px;
+		right: -100px;
 	}
 }
 </style>
