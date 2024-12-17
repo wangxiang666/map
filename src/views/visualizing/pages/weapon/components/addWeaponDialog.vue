@@ -5,7 +5,10 @@
                :close-on-click-modal="false"
                :destroy-on-close="true">
       <template #header>
-        <div class="step-title">{{stepTitle[step]}}</div>
+        <div class="step-title">
+          <span>{{stepTitle[step]}}</span>
+          <div class="right-small-box"></div>
+        </div>
       </template>
       <div class="form-content">
         <el-form ref="formRef"
@@ -39,7 +42,6 @@
           </el-form-item>
         </el-form>
 
-        <div class="right-small-box"></div>
       </div>
       <template #footer>
         <div class="dialog-footer">
@@ -210,10 +212,6 @@ defineExpose({
 	text-align: center;
 	height: 40px;
 	line-height: 58px;
-}
-.form-content {
-	height: 496px;
-	padding: 0 70px 0 20px;
 	overflow: visible;
 	position: relative;
 	.right-small-box {
@@ -222,8 +220,12 @@ defineExpose({
 		background: url('../../../images/weapon-step-small.png') no-repeat;
 		background-size: 100% 100%;
 		position: absolute;
-		top: 100px;
-		right: -100px;
+		top: 28px;
+		right: -280px;
 	}
+}
+.form-content {
+	height: 496px;
+	padding: 0 70px 0 20px;
 }
 </style>
