@@ -1,3 +1,19 @@
+<!--
+ * @Author: wangxiang666 534167821@qq.com
+ * @Date: 2024-12-17 20:30:40
+ * @LastEditors: wangxiang666 534167821@qq.com
+ * @LastEditTime: 2024-12-18 00:12:26
+ * @FilePath: \map\src\views\visualizing\pages\weapon\components\addWeaponDialog.vue
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+-->
+<!--
+ * @Author: wangxiang666 534167821@qq.com
+ * @Date: 2024-12-17 20:30:40
+ * @LastEditors: wangxiang666 534167821@qq.com
+ * @LastEditTime: 2024-12-17 23:19:31
+ * @FilePath: \map\src\views\visualizing\pages\weapon\components\addWeaponDialog.vue
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+-->
 <template>
   <div class="sim-AssaultWeaponMgr-edit">
     <el-dialog v-model="isShowDialog"
@@ -7,7 +23,30 @@
       <template #header>
         <div class="step-title">
           <span>{{stepTitle[step]}}</span>
-          <div class="right-small-box"></div>
+          <div class="right-small-box"
+               v-if="step>0">
+            <div class="title">武器参数</div>
+            <template v-if="stepForm[step-1].needInput">
+              <div class="title2">待输入参数</div>
+              <div class="content"
+                   v-for="(item2) in stepForm[step-1].needInput"
+                   :key="item2.key">
+                <div class="label">{{item2.label}}</div>
+                <el-input v-model="item2.value"></el-input>
+                <span class="unit">{{item2.unit}}</span>
+              </div>
+            </template>
+            <template v-if="stepForm[step-1].needCompute">
+              <div class="title2">待计算参数</div>
+              <div class="content"
+                   v-for="(item2) in stepForm[step-1].needCompute"
+                   :key="item2.key">
+                <div class="label">{{item2.label}}</div>
+                <span class="unit">{{item2.value||'- - '}}</span>
+                <span class="unit">{{item2.unit}}</span>
+              </div>
+            </template>
+          </div>
         </div>
       </template>
       <div class="form-content">
@@ -25,7 +64,6 @@
             <el-upload v-model:file-list="fileList"
                        class="upload-demo"
                        :on-preview="handlePreview"
-                       :on-remove="handleRemove"
                        :on-change="(file) => {fileList = file.rawFileList }"
                        :limit="1"
                        :auto-upload="false"
@@ -41,7 +79,9 @@
                       placeholder="请输入描述" />
           </el-form-item>
         </el-form>
-
+        <div ref="stepChart"
+             style="width: 100%; height: 290px;"></div>
+        <el-button @click="configWeaponParams">计算</el-button>
       </div>
       <template #footer>
         <div class="dialog-footer">
@@ -65,17 +105,15 @@
   </div>
 </template>
 <script setup>
-import { ref } from 'vue';
-import { getAssaultWeaponMgr, addAssaultWeaponMgr, updateAssaultWeaponMgr } from '/@/api/sim/AssaultWeaponMgr';
+import { nextTick, ref } from 'vue';
+import { getAssaultWeaponMgr, addAssaultWeaponMgr, updateAssaultWeaponMgr, configAssaultWeaponParam } from '/@/api/sim/AssaultWeaponMgr';
 import { ElMessage } from 'element-plus';
+import { useECharts } from '/@/views/visualizing/hook/useEcharts.js';
 const props = defineProps({
   weaponType: Number
 });
 const fileList = ref([])
 
-const handleRemove = (uploadFile, uploadFiles) => {
-  // console.log(uploadFile, uploadFiles)
-}
 const stepTitle = ref([
   '攻击武器管理',
   '导电丝束长度与完全展开时间关系',
@@ -85,6 +123,88 @@ const stepTitle = ref([
   '子弹带伞水平移动距离',
   '散布面积俯视图',
 ])
+
+const currentParams = ref({})
+const stepForm = ref([
+  {
+    needInput: [
+      {
+        label: '导电丝束长度：',
+        key: 'threadLength',
+        value: 0,
+        unit: 'M'
+      }
+    ],
+    needCompute: [
+      {
+        label: '完全展开时间：',
+        key: 'fullExpansionTime',
+        value: 0,
+        unit: 'S'
+      }
+    ]
+  },
+
+])
+
+
+
+
+const step = ref(0)
+
+const nextStep = () => {
+  if (step.value === 0) {
+    onSubmit();
+  } else {
+  }
+  step.value++
+};
+const stepChart = ref();
+const configWeaponParams = () => {
+  let params = {}
+  let Xname = ''
+  let Yname = ''
+  let stepKey = 'Step1'
+  switch (step.value) {
+    case 1:
+      params = {
+        step: 1,
+        threadLength: stepForm.value[0].needInput[0].value
+      }
+      Xname = '导电丝束长度（M）'
+      Yname = '完全展开时间(S)'
+      stepKey = 'Step1'
+      break
+  }
+  configAssaultWeaponParam(params).then(res => {
+    const xData = res.data[stepKey].X;
+    const yData = res.data[stepKey].Y;
+    const { initChart } = useECharts(stepChart, xData, yData, Xname, Yname);
+    nextTick(() => {
+      initChart()
+    })
+  })
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const dialogImageUrl = ref('')
 const dialogVisible = ref(false)
 const handlePreview = (file) => {
@@ -115,16 +235,7 @@ const formRef = ref()
 const loading = ref(false);
 const emit = defineEmits(['AssaultWeaponMgrList']);
 
-const step = ref(0)
 
-const nextStep = () => {
-  if (step.value === 0) {
-    onSubmit();
-  } else {
-
-  }
-  step.value++
-};
 const preStep = () => {
   step.value--
 };
@@ -140,15 +251,13 @@ const onSubmit = () => {
         if (i !== 'file') {
           form.append(i, formData.value[i])
         } else {
-          form.append(i, fileList.value[0].raw)
+          // form.append(i, fileList.value[0].raw)
         }
       }
       form.append('weaponType', props.weaponType)
       if (!formData.value.id || formData.value.id === 0) {
         //添加
         addAssaultWeaponMgr(form).then(() => {
-          ElMessage.success('添加成功');
-          closeDialog(); // 关闭弹窗
           emit('AssaultWeaponMgrList')
         }).finally(() => {
           loading.value = false;
@@ -156,8 +265,6 @@ const onSubmit = () => {
       } else {
         //修改
         updateAssaultWeaponMgr(form).then(() => {
-          ElMessage.success('修改成功');
-          closeDialog(); // 关闭弹窗
           emit('AssaultWeaponMgrList')
         }).finally(() => {
           loading.value = false;
@@ -215,13 +322,69 @@ defineExpose({
 	overflow: visible;
 	position: relative;
 	.right-small-box {
-		width: 302px;
-		height: 252px;
+		width: 206px;
+		min-height: 220px;
 		background: url('../../../images/weapon-step-small.png') no-repeat;
 		background-size: 100% 100%;
 		position: absolute;
-		top: 28px;
+		top: 58px;
 		right: -280px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		&::before {
+			content: '';
+			position: absolute;
+			width: 212px;
+			height: 40px;
+			top: -32px;
+			left: -102px;
+			background: url('../../../images/step-line.png') no-repeat;
+			background-size: 100% 100%;
+		}
+
+		.title {
+			color: #fff;
+			font-size: 14px;
+			line-height: 16px;
+			margin-top: 10px;
+		}
+		.title2 {
+			color: #fff;
+			font-size: 12px;
+			line-height: 16px;
+			margin-top: 10px;
+		}
+		.content {
+			display: flex;
+			align-items: center;
+			width: 100%;
+			padding: 0 12px;
+			height: 32px;
+			.label {
+				font-size: 12px;
+				white-space: nowrap;
+				height: 12px;
+				line-height: 12px;
+			}
+			.unit {
+				margin-left: 4px;
+				color: #e1aa1c;
+				font-size: 14px;
+			}
+			.el-input {
+				height: 24px;
+			}
+			:deep(.el-input__wrapper) {
+				padding: 0 8px;
+				flex: 1;
+				height: 24px;
+			}
+			:deep(.el-input__inner) {
+				color: #e1aa1c;
+				font-size: 14px;
+			}
+		}
 	}
 }
 .form-content {
