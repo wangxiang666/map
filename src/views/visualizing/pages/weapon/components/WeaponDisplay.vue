@@ -19,12 +19,13 @@
       </div>
     </div>
     <addWeaponDialog ref="addWeaponRef"
-                     :weaponType="currentWeaponType"></addWeaponDialog>
+                     :weaponType="currentWeaponType"
+                     @AssaultWeaponMgrList="getWeaponData"></addWeaponDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { toRefs, reactive, onMounted, ref, defineComponent, computed, getCurrentInstance, toRaw } from 'vue';
+import { ref } from 'vue';
 
 import {
 	listAssaultWeaponMgr,
