@@ -1,8 +1,8 @@
 <!--
  * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-17 20:30:40
- * @LastEditors: 王翔
- * @LastEditTime: 2024-12-18 18:41:12
+ * @LastEditors: wangxiang666 534167821@qq.com
+ * @LastEditTime: 2024-12-18 22:52:24
  * @FilePath: /es-big-screen/Users/wangxiang/ownSystem/map/src/views/visualizing/pages/weapon/components/addWeaponDialog.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -87,6 +87,7 @@
           </el-form-item>
         </el-form>
         <stepChartImg v-if="step>0"
+                      ref="stepChartImgRef"
                       :chartData="currentChartData"
                       :currentStep="step"
                       @compute="configWeaponParams" />
@@ -197,6 +198,7 @@ const stepKey = ref('Step1')
 const currentChartData = computed(() => {
   return chartCache.value[stepKey.value]
 })
+const stepChartImgRef = ref()
 const configWeaponParams = () => {
   let params = {}
   let Xname = ''
@@ -291,6 +293,8 @@ const configWeaponParams = () => {
       const xData = resdata.X;
       const yData = resdata.Y;
       chartCache.value[stepKey.value] = { xData, yData, Xname, Yname }
+    } else {
+      stepChartImgRef.value.updateCircle(resdata.Radius)
     }
   })
 }
@@ -584,7 +588,7 @@ defineExpose({
 	overflow: visible;
 	position: relative;
 	.right-small-box {
-		width: 206px;
+		width: 220px;
 		min-height: 220px;
 		background: url('../../../images/weapon-step-small.png') no-repeat;
 		background-size: 100% 100%;
@@ -594,13 +598,15 @@ defineExpose({
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		padding: 8px 10px;
+		box-sizing: content-box;
 		&::before {
 			content: '';
 			position: absolute;
-			width: 212px;
+			width: 205px;
 			height: 40px;
 			top: -32px;
-			left: -102px;
+			left: -75px;
 			background: url('../../../images/step-line.png') no-repeat;
 			background-size: 100% 100%;
 		}
@@ -610,6 +616,7 @@ defineExpose({
 			font-size: 14px;
 			line-height: 16px;
 			margin-top: 10px;
+			font-weight: bolder;
 		}
 		.title2 {
 			color: #fff;
@@ -637,6 +644,7 @@ defineExpose({
 			}
 			.el-input {
 				height: 24px;
+				width: 80px;
 			}
 			:deep(.el-input__wrapper) {
 				padding: 0 8px;

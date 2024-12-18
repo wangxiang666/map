@@ -1,16 +1,22 @@
 <template>
   <div class="step-chart-img">
-    <!-- <div ref="stepChart"
-         class="step-chart">
+    <div ref="stepChart"
+         class="step-chart"
+         v-show="currentStep<=4">
 
-    </div> -->
-    <div class="circle-box">
+    </div>
+    <div class="circle-box"
+         v-show="currentStep===5">
       <div class="circle"></div>
+      <span class="maxX">{{maxScale}}</span>
+      <span class="maxY">{{maxScale}}</span>
+      <span class="maxX-label">散布长度（m）</span>
+      <span class="maxY-label">散布宽度（m）</span>
     </div>
     <el-button type="primary"
                class="search-form-btn compute-btn"
                @click="compute">计算</el-button>
-    <img :src="currentImg"
+    <img :src="img[currentImg]"
          alt=""
          class="step-chart-img-item">
   </div>
@@ -18,6 +24,20 @@
 <script setup>
 import { ref, onMounted, watch, nextTick } from 'vue'
 import * as echarts from 'echarts';
+import Step1 from '/@/views/visualizing/images/step/Step1.png'
+import Step2 from '/@/views/visualizing/images/step/Step2.png'
+import Step3 from '/@/views/visualizing/images/step/Step3.png'
+import Step4 from '/@/views/visualizing/images/step/Step4.png'
+import Step5 from '/@/views/visualizing/images/step/Step5.png'
+
+
+const img = {
+  Step1,
+  Step2,
+  Step3,
+  Step4,
+  Step5
+}
 const props = defineProps({
   currentStep: {
     type: Number,
@@ -27,17 +47,18 @@ const props = defineProps({
     type: Object
   }
 })
-const circleSize = ref(0)
+const maxScale = ref(0)
 const updateCircle = (R) => {
+  maxScale.value = Math.ceil(R * 250 / 220)
 
 }
 const emit = defineEmits(['compute'])
 const compute = () => {
   emit('compute')
 }
-const currentImg = ref('/@/views/visualizing/images/step/Step1.png')
+const currentImg = ref('Step1')
 watch(() => props.currentStep, () => {
-  currentImg.value = `/@/views/visualizing/images/step/Step${props.currentStep}.png`
+  currentImg.value = 'Step' + props.currentStep
 }, { deep: true, immediately: true })
 const stepChart = ref();
 const chartInstance = ref(null);
@@ -57,7 +78,7 @@ const initChart = ({ Xname, xData, Yname, yData }) => {
       nameLocation: 'middle',
       nameGap: 25,
       nameTextStyle: {
-        color: "#fff", // Y轴名称颜色设置
+        color: "#74d2d6", // Y轴名称颜色设置
         fontSize: 14,
       },
       axisLine: {
@@ -77,7 +98,7 @@ const initChart = ({ Xname, xData, Yname, yData }) => {
       name: Yname,
       nameLocation: 'middle',
       nameTextStyle: {
-        color: "#fff", // Y轴名称颜色设置
+        color: "#74d2d6", // Y轴名称颜色设置
         fontSize: 14,
       },
       axisLine: {
@@ -118,12 +139,8 @@ watch(() => props.chartData, () => {
   }
 }, { deep: true })
 
-const drawCircle = (data) => {
-  const { radius } = data
-
-}
 defineExpose({
-  drawCircle
+  updateCircle
 })
 </script>
 
@@ -135,12 +152,41 @@ defineExpose({
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	position: relative;
+	margin-bottom: 40px;
+	flex-shrink: 0;
 	.circle {
 		width: 220px;
 		height: 220px;
 		border-radius: 100%;
 		border: 1px solid #fff;
 		background: rgba(213, 2, 2, 0.2);
+	}
+	.maxX {
+		position: absolute;
+		bottom: -18px;
+		right: -12px;
+		color: #fff;
+	}
+	.maxX-label {
+		position: absolute;
+		bottom: -30px;
+		right: 62px;
+		color: #74d2d6;
+	}
+	.maxY {
+		position: absolute;
+		top: 5px;
+		left: -26px;
+		transform: rotateZ(-90deg);
+		color: #fff;
+	}
+	.maxY-label {
+		position: absolute;
+		top: 105px;
+		left: -95px;
+		transform: rotateZ(-90deg);
+		color: #74d2d6;
 	}
 }
 .step-chart-img {
