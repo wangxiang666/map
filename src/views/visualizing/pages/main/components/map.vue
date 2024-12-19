@@ -241,6 +241,26 @@ const initOl = () => {
 			new TileLayer({
 				source: new XYZ({
 					url: 'https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
+					// crossOrigin: 'anonymous',
+					// tileLoadFunction: function (imageTile, src) {
+					// 	// 使用滤镜 将白色修改为深色
+					// 	const img = new Image();
+					// 	// img.crossOrigin = ''
+					// 	// 设置图片不从缓存取，从缓存取可能会出现跨域，导致加载失败
+					// 	img.setAttribute('crossOrigin', 'anonymous');
+					// 	img.onload = function () {
+					// 		const canvas = document.createElement('canvas');
+					// 		const w = img.width;
+					// 		const h = img.height;
+					// 		canvas.width = w;
+					// 		canvas.height = h;
+					// 		const context = canvas.getContext('2d');
+					// 		context.filter = 'grayscale(98%) invert(100%) sepia(20%) hue-rotate(180deg) saturate(1600%) brightness(80%) contrast(90%)';
+					// 		context.drawImage(img, 0, 0, w, h, 0, 0, w, h);
+					// 		imageTile.getImage().src = canvas.toDataURL('image/png');
+					// 	};
+					// 	img.src = src;
+					// },
 				}),
 			}),
 			// 高德注记
@@ -266,72 +286,73 @@ const initOl = () => {
 	});
 
 	// 修改点击事件处理
-	map.on('click', function (evt: MapBrowserEvent<MouseEvent>) {
-		const coordinate = evt.coordinate;
+	// map.on('click', function (evt: MapBrowserEvent<MouseEvent>) {
+	// 	const coordinate = evt.coordinate;
 
-		// 清除所有要素
-		vectorLayerNode.value.getSource().clear();
-		// 创建圆形
-		const point = turf.point([coordinate[0], coordinate[1]]);
-		const circle = turf.circle(point, 88, {
-			steps: 64,
-			units: 'meters',
-		});
+	// 	// 清除所有要素
+	// 	vectorLayerNode.value.getSource().clear();
+	// 	// 创建圆形
+	// 	const point = turf.point([coordinate[0], coordinate[1]]);
+	// 	const circle = turf.circle(point, 88, {
+	// 		steps: 64,
+	// 		units: 'meters',
+	// 	});
 
-		const circleFeature = new GeoJSON().readFeature(circle);
-		circleFeature.setStyle(
-			new Style({
-				stroke: new Stroke({
-					color: 'green',
-					width: 2,
-				}),
-				fill: new Fill({
-					color: 'rgba(0,255,0,0.2)',
-				}),
-			})
-		);
-		// 重新添加原始要素并检查相交
-		originalNodeFeatures.forEach((feature) => {
-			vectorLayerNode.value.getSource().addFeature(feature);
+	// 	const circleFeature = new GeoJSON().readFeature(circle);
+	// 	circleFeature.setStyle(
+	// 		new Style({
+	// 			stroke: new Stroke({
+	// 				color: 'green',
+	// 				width: 2,
+	// 			}),
+	// 			fill: new Fill({
+	// 				color: 'rgba(0,255,0,0.2)',
+	// 			}),
+	// 		})
+	// 	);
+	// 	// 重新添加原始要素并检查相交
+	// 	originalNodeFeatures.forEach((feature) => {
+	// 		vectorLayerNode.value.getSource().addFeature(feature);
 
-			// 将 OpenLayers Feature 转换为 GeoJSON 格式
-			const format = new GeoJSON();
-			const featureGeoJSON = format.writeFeatureObject(feature, {
-				featureProjection: 'EPSG:4326',
-			});
+	// 		// 将 OpenLayers Feature 转换为 GeoJSON 格式
+	// 		const format = new GeoJSON();
+	// 		const featureGeoJSON = format.writeFeatureObject(feature, {
+	// 			featureProjection: 'EPSG:4326',
+	// 		});
 
-			// 确保我们有正确的 GeoJSON 格式
-			if (featureGeoJSON.geometry && featureGeoJSON.geometry.type === 'MultiPolygon') {
-				try {
-					// 将 MultiPolygon 换为 Feature
-					const multiPolygonFeature = turf.multiPolygon(featureGeoJSON.geometry.coordinates);
-					// 现在可以使用 turf.intersect
-					const intersection = turf.intersect(multiPolygonFeature, circle);
-					if (intersection) {
-						// console.log('Found intersection:', intersection, '相交面积：', turf.area(intersection));
-						// 这里可以处理相交的结果
-						const intersectionFeature = new GeoJSON().readFeature(intersection);
-						intersectionFeature.setStyle(
-							new Style({
-								stroke: new Stroke({
-									color: 'yellow',
-									width: 2,
-								}),
-								fill: new Fill({
-									color: 'rgba(255,255,0,1)',
-								}),
-							})
-						);
-						vectorLayerNode.value.getSource().addFeature(intersectionFeature);
-					}
-				} catch (error) {
-					console.warn('Error checking intersection:', error);
-				}
-			}
-		});
+	// 		// 确保我们有正确的 GeoJSON 格式
+	// 		if (featureGeoJSON.geometry && featureGeoJSON.geometry.type === 'MultiPolygon') {
+	// 			try {
+	// 				// 将 MultiPolygon 换为 Feature
+	// 				const multiPolygonFeature = turf.multiPolygon(featureGeoJSON.geometry.coordinates);
+	// 				// 现在可以使用 turf.intersect
+	// 				const intersection = turf.intersect(multiPolygonFeature, circle);
+	// 				if (intersection) {
+	// 					// console.log('Found intersection:', intersection, '相交面积：', turf.area(intersection));
+	// 					// 这里可以处理相交的结果
+	// 					const intersectionFeature = new GeoJSON().readFeature(intersection);
+	// 					intersectionFeature.setStyle(
+	// 						new Style({
+	// 							stroke: new Stroke({
+	// 								color: 'yellow',
+	// 								width: 2,
+	// 							}),
+	// 							fill: new Fill({
+	// 								color: 'rgba(255,255,0,1)',
+	// 							}),
+	// 						})
+	// 					);
+	// 					vectorLayerNode.value.getSource().addFeature(intersectionFeature);
+	// 				}
+	// 			} catch (error) {
+	// 				console.warn('Error checking intersection:', error);
+	// 			}
+	// 		}
+	// 	});
 
-		vectorLayerNode.value.getSource().addFeature(circleFeature);
-	});
+	// 	vectorLayerNode.value.getSource().addFeature(circleFeature);
+	// });
+
 	// 修改鼠标移动事件处理
 	map.on('pointermove', function (evt: MapBrowserEvent<MouseEvent>) {
 		const pixel = evt.pixel;

@@ -1,68 +1,103 @@
 <template>
-	<div class="data-list">
-		<!-- 搜索区域 -->
-        <el-form :model="tableData.param" ref="queryRef" :inline="true" label-width="100px">
-			<el-row>
-				<el-col :span="8" class="colBlock">
-					<el-form-item label="任务名称" prop="name">
-						<el-input v-model="tableData.param.name" placeholder="请输入名称" clearable @keyup.enter.native="DeductionMgrList" />
-					</el-form-item>
-				</el-col>
-			
-				<el-col :span="8" :class="!showAll ? 'colBlock' : 'colNone'">
-					<el-form-item>
-						<el-button type="primary" class="search-form-btn" @click="DeductionMgrList">查询</el-button>
-						<el-button type="primary" class="search-form-btn" @click="handleAdd">新增</el-button>
-					</el-form-item>
-				</el-col>
-				
-			</el-row>
-		</el-form>
+  <div class="data-list">
+    <!-- 搜索区域 -->
+    <el-form :model="tableData.param"
+             ref="queryRef"
+             :inline="true"
+             label-width="100px">
+      <el-row>
+        <el-col :span="8"
+                class="colBlock">
+          <el-form-item label="任务名称"
+                        prop="name">
+            <el-input v-model="tableData.param.name"
+                      placeholder="请输入名称"
+                      clearable
+                      @keyup.enter.native="DeductionMgrList" />
+          </el-form-item>
+        </el-col>
 
-		<!-- 表格区域 -->
-		<el-table :data="tableData.data" border style="width: 100%">
-			<el-table-column type="index" label="序号" width="80" />
-			<el-table-column prop="name" label="名称" />
-			<el-table-column prop="damageTargetName" label="毁伤目标" />
-			<el-table-column prop="damagePlanName" label="毁伤预案" />
+        <el-col :span="8"
+                :class="!showAll ? 'colBlock' : 'colNone'">
+          <el-form-item>
+            <el-button type="primary"
+                       class="search-form-btn"
+                       @click="DeductionMgrList">查询</el-button>
+            <el-button type="primary"
+                       class="search-form-btn"
+                       @click="handleAdd">新增</el-button>
+          </el-form-item>
+        </el-col>
 
-			<el-table-column label="控制方式" align="center" prop="controlMode" min-width="100px">
-				<template #default="scope">
-					<span>{{ scope.row.controlMode === 1 ? '人不在回路' : '人在回路' }}</span>
-				</template>
-			</el-table-column>
+      </el-row>
+    </el-form>
 
+    <!-- 表格区域 -->
+    <el-table :data="tableData.data"
+              border
+              style="width: 100%">
+      <el-table-column type="index"
+                       label="序号"
+                       width="80" />
+      <el-table-column prop="name"
+                       label="名称" />
+      <el-table-column prop="damageTargetName"
+                       label="毁伤目标" />
+      <el-table-column prop="damagePlanName"
+                       label="毁伤预案" />
 
-			<el-table-column label="状态" align="center" prop="status" min-width="100px">
-				<template #default="scope">
-					<span :style="{ color: scope.row.status === 0 ? 'green' : 'red' }">{{ scope.row.status === 0 ? '未推演' : '已推演' }}</span>
-				</template>
-			</el-table-column>
+      <el-table-column label="控制方式"
+                       align="center"
+                       prop="controlMode"
+                       min-width="100px">
+        <template #default="scope">
+          <span>{{ scope.row.controlMode === 1 ? '人不在回路' : '人在回路' }}</span>
+        </template>
+      </el-table-column>
 
-			<el-table-column prop="creator" label="创建人" />
-			<el-table-column label="操作" width="280">
-				<template #default="scope">
-					<el-button link type="primary">查看</el-button>
+      <el-table-column label="状态"
+                       align="center"
+                       prop="status"
+                       min-width="100px">
+        <template #default="scope">
+          <span :style="{ color: scope.row.status === 0 ? 'green' : 'red' }">{{ scope.row.status === 0 ? '未推演' : '已推演' }}</span>
+        </template>
+      </el-table-column>
 
-					<el-button type="primary" link @click="handleUpdate(scope.row)" v-auth="'api/v1/sim/deductionMgr/edit'"><el-icon><ele-EditPen /></el-icon>编辑</el-button>
+      <el-table-column prop="creator"
+                       label="创建人" />
+      <el-table-column label="操作"
+                       width="280">
+        <template #default="scope">
+          <el-button link
+                     type="primary">查看</el-button>
 
-					<el-button type="primary" link @click="handleDelete(scope.row)" v-auth="'api/v1/sim/deductionMgr/delete'"
-						><el-icon><ele-DeleteFilled /></el-icon>删除</el-button
-					>
-					<el-button link type="primary">推演</el-button>
-					<el-button link type="primary">回放</el-button>
-				</template>
-			</el-table-column>
-		</el-table>
+          <el-button type="primary"
+                     link
+                     @click="handleUpdate(scope.row)"
+                     v-auth="'api/v1/sim/deductionMgr/edit'">编辑</el-button>
 
-		<!-- 分页 -->
-		<div class="pagination">
-			<span>上一页</span>
-			<span class="page-num">1</span>
-			<span>下一页</span>
-			<span class="total">共10页</span>
-		</div>
-	</div>
+          <el-button type="primary"
+                     link
+                     @click="handleDelete(scope.row)"
+                     v-auth="'api/v1/sim/deductionMgr/delete'">删除</el-button>
+          <el-button link
+                     type="primary"
+                     @click="deduct(scope.row)">推演</el-button>
+          <el-button link
+                     type="primary">回放</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- 分页 -->
+    <div class="pagination">
+      <span>上一页</span>
+      <span class="page-num">1</span>
+      <span>下一页</span>
+      <span class="total">共10页</span>
+    </div>
+  </div>
 </template>
   <script lang="ts">
 import { toRefs, reactive, onMounted, ref, defineComponent, computed, getCurrentInstance, toRaw } from 'vue';
@@ -198,8 +233,11 @@ export default defineComponent({
 		const handleView = (row: DeductionMgrTableColumns) => {
 			detailRef.value.openDialog(toRaw(row));
 		};
-
+		const deduct = (row: DeductionMgrTableColumns) => {
+			emit('deduct', row);
+		};
 		return {
+			deduct,
 			proxy,
 			editRef,
 			detailRef,
@@ -225,9 +263,9 @@ export default defineComponent({
   
   <style scoped>
 .data-list {
-	padding: 20px;
+	padding: 20px 0 20px 20px;
 	color: #fff;
-	width: calc(100% - 800px);
+	width: calc(100% - 650px);
 }
 
 .search-area {
