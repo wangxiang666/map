@@ -8,7 +8,7 @@
 -->
 <template>
 	<div class="display-container">
-		<span class="display-title">火力发电厂</span>
+		<!-- <span class="display-title">火力发电厂</span> -->
 		<!-- <iframe src="http://127.0.0.1:8080/webgl-1/" style="margin-top: 6%;margin-left: 5%;" width="91%" height="85%" frameborder="0" scrolling="no"></iframe> -->
 
 		<iframe v-if="src" :src="src" style="margin-top: 6%;margin-left: 5%;" width="91%" height="85%" frameborder="0" scrolling="no"></iframe>

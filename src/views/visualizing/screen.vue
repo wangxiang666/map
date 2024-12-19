@@ -74,7 +74,7 @@ const screenMenuLeft = ref([
   },
   {
     activeIndex: 1,
-    title: '场景管理'
+    title: '场景展示'
   },
   {
     activeIndex: 2,
@@ -97,7 +97,7 @@ const screenMenuRight = ref([
   },
   {
     activeIndex: 6,
-    title: '拓扑展示'
+    title: '薄弱环节'
   },
   {
     activeIndex: 7,

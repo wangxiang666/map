@@ -72,7 +72,7 @@ export default defineComponent({
 			router.push({
 				name: 'paramsDynamicDetails',
 				params: {
-					t: '代码生成平台',
+					t: '管理后台',
 					id: state.value,
 					tagsViewName: state.tagsViewName,
 				},
