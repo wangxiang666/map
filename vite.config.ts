@@ -52,6 +52,21 @@ const viteConfig = defineConfig((mode: ConfigEnv) => {
 					changeOrigin: true,
 					secure: false,
 				},
+				'/webgl-huodian': {
+					target: 'http://127.0.0.1:8081', // GeoServer 地址
+					changeOrigin: true,
+					secure: false,
+				},
+				'/webgl-biandian': {
+					target: 'http://127.0.0.1:8081', // GeoServer 地址
+					changeOrigin: true,
+					secure: false,
+				},
+				'/webgl-fengdian': {
+					target: 'http://127.0.0.1:8081', // GeoServer 地址
+					changeOrigin: true,
+					secure: false,
+				},
 			},
 		},
 		build: {

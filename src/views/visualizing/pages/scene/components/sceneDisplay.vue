@@ -7,18 +7,26 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
-  <div class="display-container">
-    <span class="display-title">火力发电厂</span>
-  </div>
+	<div class="display-container">
+		<span class="display-title">火力发电厂</span>
+		<!-- <iframe src="http://127.0.0.1:8080/webgl-1/" style="margin-top: 6%;margin-left: 5%;" width="91%" height="85%" frameborder="0" scrolling="no"></iframe> -->
+
+		<iframe v-if="src" :src="src" style="margin-top: 6%;margin-left: 5%;" width="91%" height="85%" frameborder="0" scrolling="no"></iframe>
+    	<span v-else>请选择一个场景展示</span>
+	</div>
 </template>
 
 <script setup>
 defineProps({
-  weapons: {
-    type: Array,
-    required: true
-  }
-})
+	weapons: {
+		type: Array,
+		required: true,
+	},
+	src: {
+    type: String,
+    required: false,
+  },
+});
 </script>
 
 <style lang="scss" scoped>

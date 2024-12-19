@@ -7,32 +7,27 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
-  <div class="menu-container">
-    <div v-for="category in categories"
-         :key="category.title"
-         class="category">
-      <div class="menu-title">{{ category.title }}</div>
-      <div v-for="item in category.items"
-           :key="item"
-           class="menu-item"
-           @click="$emit('select', item)">
-        <!-- 菜单项图标占位 -->
-        <!-- <img :src="`/icons/${item}.png`" class="item-icon"> -->
-        <span>{{ item }}</span>
-      </div>
-    </div>
-  </div>
+	<div class="menu-container">
+		<div v-for="category in categories" :key="category.title" class="category">
+			<div class="menu-title">{{ category.title }}</div>
+			<div v-for="item in category.items" :key="item" class="menu-item" @click="$emit('select', item)">
+				<!-- 菜单项图标占位 -->
+				<!-- <img :src="`/icons/${item}.png`" class="item-icon"> -->
+				<span>{{ item }}</span>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script setup>
 defineProps({
-  categories: {
-    type: Array,
-    required: true
-  }
-})
+	categories: {
+		type: Array,
+		required: true,
+	},
+});
 
-defineEmits(['select'])
+defineEmits(['select']);
 </script>
 
 <style lang="scss" scoped>
