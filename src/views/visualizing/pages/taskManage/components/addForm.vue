@@ -12,49 +12,46 @@
                   placeholder="请输入预案名称" />
       </el-form-item>
 
+      <el-form-item label="描述"
+                    prop="note">
+        <el-input type="textarea"
+                  :rows="6"
+                  placeholder="请输入内容"
+                  v-model="formData.note">
+        </el-input>
+      </el-form-item>
 
-	 
-			<el-form-item label="描述"
-				  prop="note">
-				  <el-input
-					type="textarea"
-					:rows="6"
-					placeholder="请输入内容"
-					v-model="formData.note">
-					</el-input>
-     		</el-form-item>
+      <el-form-item label="攻击目标"
+                    prop="destroy_target">
+        <el-select v-model="formData.destroy_target"
+                   placeholder="请选择攻击目标">
+          <el-option v-for="item in destroyTargetList"
+                     :key="item.id"
+                     :label="item.name"
+                     :value="item.id" />
+        </el-select>
+      </el-form-item>
 
+      <el-form-item label="毁伤预案"
+                    prop="destroy_plan">
+        <el-select v-model="formData.destroy_plan"
+                   placeholder="请选择毁伤预案">
+          <el-option v-for="item in destroyPlanList"
+                     :key="item.id"
+                     :label="item.name"
+                     :value="item.id" />
+        </el-select>
+      </el-form-item>
 
-        <el-form-item label="攻击目标"
-                      prop="destroy_target">
-          <el-select v-model="formData.destroy_target"
-                     placeholder="请选择攻击目标">
-            <el-option v-for="item in destroyTargetList"
-                       :key="item.id"
-                       :label="item.name"
-                       :value="item.id" />
-          </el-select>
-        </el-form-item> 
-
-		<el-form-item label="毁伤预案"
-                      prop="destroy_plan">
-          <el-select v-model="formData.destroy_plan"
-                     placeholder="请选择毁伤预案">
-            <el-option v-for="item in destroyPlanList"
-                       :key="item.id"
-                       :label="item.name"
-                       :value="item.id" />
-          </el-select>
-        </el-form-item> 
-
-
-		<el-form-item label="控制方式" prop="control_mode">
-		<el-radio-group v-model="formData.control_mode">
-			<el-radio label="1"  size="large" >人不在回路</el-radio>
-			<el-radio label="2" size="large">人在回路</el-radio>
-		</el-radio-group>
-		</el-form-item>
-
+      <el-form-item label="控制方式"
+                    prop="control_mode">
+        <el-radio-group v-model="formData.control_mode">
+          <el-radio label="1"
+                    size="large">人不在回路</el-radio>
+          <el-radio label="2"
+                    size="large">人在回路</el-radio>
+        </el-radio-group>
+      </el-form-item>
 
       <div class="submit-bottom">
         <el-button type="primary"
@@ -69,35 +66,19 @@
 </template>
 
 <script lang="ts">
-import { reactive, toRefs, defineComponent, ref, unref, getCurrentInstance, computed, onMounted  } from 'vue';
+import { reactive, toRefs, defineComponent, ref, unref, getCurrentInstance, computed, onMounted } from 'vue';
 import { ElMessageBox, ElMessage, FormInstance, UploadProps } from 'element-plus';
-import {
-    listDeductionMgr,
-    getDeductionMgr,
-    addDeductionMgr,
-    updateDeductionMgr,
-    delDeductionMgr,    
-} from "/@/api/sim/DeductionMgr";
-import {
-    listPlanMgr,
-} from "/@/api/sim/PlanMgr";
+import { listDeductionMgr, getDeductionMgr, addDeductionMgr, updateDeductionMgr, delDeductionMgr } from '/@/api/sim/DeductionMgr';
+import { listPlanMgr } from '/@/api/sim/PlanMgr';
 
-import{
-	listPowerFlowNodeMgr,
-} from "/@/api/sim/PowerFlowNode";
+import { listPowerFlowNodeMgr } from '/@/api/sim/PowerFlowNode';
 
-
-import {
-  DeductionMgrTableColumns,
-  DeductionMgrInfoData,
-  DeductionMgrTableDataState,
-  DeductionMgrEditState
-} from "./model"
+import { DeductionMgrTableColumns, DeductionMgrInfoData, DeductionMgrTableDataState, DeductionMgrEditState } from './model';
 export default defineComponent({
 	name: 'apiV1SimDeductionMgrEdit',
 	components: {},
 	props: {},
-	
+
 	setup(props, { emit }) {
 		const { proxy } = <any>getCurrentInstance();
 		const formRef = ref<HTMLElement | null>(null);
@@ -118,7 +99,7 @@ export default defineComponent({
 				operator: undefined,
 				createdAt: undefined,
 				updatedAt: undefined,
-				note: undefined
+				note: undefined,
 			},
 			// 表单校验
 			rules: {
@@ -128,29 +109,25 @@ export default defineComponent({
 				control_mode: [{ required: true, message: '控制方式', trigger: 'blur' }],
 			},
 			destroyTargetList: [],
-			destroyPlanList:[],
+			destroyPlanList: [],
 		});
-
-
 
 		// 获取毁伤目标列表
 		const fetchDestroyTargetList = () => {
-			listPowerFlowNodeMgr({attack_flag: 1}).then((res:any)=>{
-            let list = res.data.list??[];            
-            state.destroyTargetList = list;
-    	})
-    	};   
-  
-		
+			listPowerFlowNodeMgr({ attack_flag: 1 }).then((res: any) => {
+				let list = res.data.list ?? [];
+				state.destroyTargetList = list;
+			});
+		};
+
 		// 获取毁伤目标列表
 		const fetchDestroyPlanList = () => {
-			listPlanMgr().then((res:any)=>{
-            let list = res.data.list??[];            
-            state.destroyPlanList = list;
-          })
-    	};   
+			listPlanMgr().then((res: any) => {
+				let list = res.data.list ?? [];
+				state.destroyPlanList = list;
+			});
+		};
 
-		
 		onMounted(() => {
 			fetchDestroyTargetList();
 			fetchDestroyPlanList();
@@ -223,9 +200,6 @@ export default defineComponent({
 				updatedAt: undefined,
 			};
 		};
-		
-
-		
 
 		return {
 			// defensiveWeaponOptions,
@@ -245,8 +219,6 @@ export default defineComponent({
 
 
 <style scoped>
-
-
 .add-form {
 	padding: 30px;
 	border-radius: 8px;
@@ -277,9 +249,4 @@ export default defineComponent({
 :deep(.el-form-item) {
 	margin-bottom: 24px;
 }
-
-
-
-
-
 </style>
