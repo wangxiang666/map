@@ -2,14 +2,17 @@
  * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-11 14:14:56
  * @LastEditors: wangxiang666 534167821@qq.com
- * @LastEditTime: 2024-12-19 21:37:38
+ * @LastEditTime: 2024-12-19 22:34:36
  * @FilePath: /es-big-screen/Users/wangxiang/ownSystem/map/src/views/visualizing/pages/taskManage/index.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
   <div class="task-manage">
     <leftMap :class="{smallMap:showFrom}"
-             :deductStatus="deductStatus"></leftMap>
+             :deductStatus="deductStatus"
+             @backToList="deductStatus = false"
+             :destination="destination">
+    </leftMap>
     <manageTable v-show="!showFrom"
                  ref="tableRef"
                  @handleAdd="handleAdd"
@@ -39,7 +42,9 @@ const handleAdd = (row) => {
   showFrom.value = true;
 };
 const deductStatus = ref(false)
+const destination = ref({})
 const handleDeduct = (row) => {
+  destination.value = row.damageTargetName
   deductStatus.value = true
   console.log(row)
 }

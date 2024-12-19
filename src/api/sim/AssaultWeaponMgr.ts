@@ -51,3 +51,11 @@ export const configAssaultWeaponParam = (data: object) => {
 		data: data,
 	});
 };
+//文件上传
+export const uploadImage = (data: object) => {
+	return request({
+		url: '/api/v1/system/upload/singleImg',
+		method: 'post',
+		data: data,
+	});
+};
