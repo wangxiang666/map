@@ -23,10 +23,8 @@
 		<el-table :data="tableData.data" border style="width: 100%">
 			<el-table-column type="index" label="序号" width="80" />
 			<el-table-column prop="name" label="名称" />
-			<el-table-column prop="destroyTarget" label="毁伤目标" />
-			<el-table-column prop="destroyPlan" label="毁伤预案" />
-			
-			
+			<el-table-column prop="damageTargetName" label="毁伤目标" />
+			<el-table-column prop="damagePlanName" label="毁伤预案" />
 
 			<el-table-column label="控制方式" align="center" prop="controlMode" min-width="100px">
 				<template #default="scope">
@@ -45,7 +43,9 @@
 			<el-table-column label="操作" width="280">
 				<template #default="scope">
 					<el-button link type="primary">查看</el-button>
-					<el-button link type="primary">编辑</el-button>
+
+					<el-button type="primary" link @click="handleUpdate(scope.row)" v-auth="'api/v1/sim/deductionMgr/edit'"><el-icon><ele-EditPen /></el-icon>编辑</el-button>
+
 					<el-button type="primary" link @click="handleDelete(scope.row)" v-auth="'api/v1/sim/deductionMgr/delete'"
 						><el-icon><ele-DeleteFilled /></el-icon>删除</el-button
 					>
@@ -64,7 +64,6 @@
 		</div>
 	</div>
 </template>
-  
   <script lang="ts">
 import { toRefs, reactive, onMounted, ref, defineComponent, computed, getCurrentInstance, toRaw } from 'vue';
 import { ElMessageBox, ElMessage, FormInstance } from 'element-plus';
