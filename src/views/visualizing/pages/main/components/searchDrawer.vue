@@ -9,11 +9,13 @@
              label-width="140px"
              class="form-box">
       <el-form-item label="查询类型"
-                  prop="searchType">
-      <el-select v-model="formData.searchType" >
-        <el-option label="节点查询" value="node"></el-option>
-        <el-option label="线路查询" value="line"></el-option>
-      </el-select>
+                    prop="searchType">
+        <el-select v-model="formData.searchType">
+          <el-option label="节点查询"
+                     value="node"></el-option>
+          <el-option label="线路查询"
+                     value="line"></el-option>
+        </el-select>
       </el-form-item>
       <el-form-item label="名称"
                     prop="name">
@@ -25,43 +27,51 @@
       </el-form-item>
 
       <template v-if="formData.searchType==='node'">
+        <!-- 1 变电站 2 发电站 -->
+        <el-form-item label="类型"
+                      prop="flag">
+          <el-select v-model="formData.flag">
+            <el-option label="全部"
+                       :value="''"></el-option>
+            <el-option label="变电站"
+                       :value="1"></el-option>
+            <el-option label="发电站"
+                       :value="2"></el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="省份"
-                    prop="addr_provi">
-        <el-input v-model="formData.addr_provi" />
-      </el-form-item>
-      <el-form-item label="中文名"
-                    prop="name_zh">
-        <el-input v-model="formData.name_zh" />
-      </el-form-item>
-      <el-form-item label="容量"
-                    prop="rating">
-        <el-input v-model="formData.rating" />
-      </el-form-item>
-      <!-- 1 变电站 2 发电站 -->
-      <el-form-item label="类型"
-                    prop="flag">
-        <el-select v-model="formData.flag" >
-          <el-option label="变电站" :value="1"></el-option>
-          <el-option label="发电站" :value="2"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="装机容量"
-                    prop="plant_outp">
-        <el-input v-model="formData.plant_outp" />
-      </el-form-item>
+                      prop="addr_provi">
+          <el-input v-model="formData.addr_provi" />
+        </el-form-item>
+        <el-form-item label="中文名"
+                      prop="name_zh">
+          <el-input v-model="formData.name_zh" />
+        </el-form-item>
+        <el-form-item label="容量"
+                      prop="rating"
+                      v-if="formData.flag===1">
+          <el-input v-model="formData.rating" />
+        </el-form-item>
 
-      <el-form-item label="发电厂类型"
-                    prop="plant_sour">
-        <el-input v-model="formData.plant_sour" />
-      </el-form-item>
+        <el-form-item label="装机容量"
+                      prop="plant_outp"
+                      v-if="formData.flag===2">
+          <el-input v-model="formData.plant_outp" />
+        </el-form-item>
+
+        <el-form-item label="发电厂类型"
+                      prop="plant_sour"
+                      v-if="formData.flag===2">
+          <el-input v-model="formData.plant_sour" />
+        </el-form-item>
       </template>
 
-      
     </el-form>
 
     <template #footer>
       <div class="drawer-footer">
         <el-button type="primary"
+                   class="bg-form-btn"
                    @click="submitForm">
           确定
         </el-button>
@@ -78,18 +88,16 @@ const formRef = ref<FormInstance>();
 
 // 表单数据
 const formData = ref({
-  searchType: 'node',
+	searchType: 'node',
 	addr_provi: '',
 	name: '',
 	name_zh: '',
 	rating: '',
 	voltage: '',
-	flag: 1,
+	flag: '',
 	plant_outp: '',
-	plant_sour: ''
+	plant_sour: '',
 });
-
-
 
 // 打开抽屉的方法
 const open = () => {
@@ -107,7 +115,7 @@ const submitForm = async () => {
 
 	await formRef.value.validate((valid) => {
 		if (valid) {
-      emit('search-change', formData.value)
+			emit('search-change', formData.value);
 			closeDrawer();
 		}
 	});
@@ -115,7 +123,7 @@ const submitForm = async () => {
 
 // 暴露方法给父组件
 defineExpose({
-	open
+	open,
 });
 </script>
 
@@ -137,8 +145,9 @@ defineExpose({
 .drawer-footer {
 	display: flex;
 	justify-content: center;
+	height: 80px;
 }
-.form-box{
-  padding: 40px 40px 0 0;
+.form-box {
+	padding: 40px 40px 0 0;
 }
 </style>

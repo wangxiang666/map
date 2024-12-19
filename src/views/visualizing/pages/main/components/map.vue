@@ -1,45 +1,53 @@
 <template>
-	<div id="olMap">
-		<!-- 添加自定义全屏按钮 -->
-		<div class="custom-tool custom-search" @click="searchMap">
-			<el-icon>
-				<ele-Search />
-			</el-icon>
-			<!-- <i :class="isFullScreen ? 'el-icon-close' : 'el-icon-full-screen'"></i> -->
-		</div>
-		<div class="custom-tool custom-fullscreen" @click="toggleFullScreen">
-			<el-icon>
-				<ele-Close v-if="isFullScreen" />
-				<ele-FullScreen v-else />
-			</el-icon>
-			<!-- <i :class="isFullScreen ? 'el-icon-close' : 'el-icon-full-screen'"></i> -->
-		</div>
-	</div>
+  <div id="olMap">
+    <!-- 添加自定义全屏按钮 -->
+    <div class="custom-tool custom-reset"
+         @click="searchMap"
+         title="查询">
+      <el-icon>
+        <ele-Search />
+      </el-icon>
+    </div>
+    <div class="custom-tool custom-search"
+         @click="resetMap"
+         title="恢复地图">
+      <el-icon>
+        <ele-RefreshLeft />
+      </el-icon>
+    </div>
+    <div class="custom-tool custom-fullscreen"
+         @click="toggleFullScreen">
+      <el-icon>
+        <ele-ScaleToOriginal v-if="isFullScreen" />
+        <ele-FullScreen v-else />
+      </el-icon>
+    </div>
+  </div>
 
-	<!-- 使用 element-plus 的 popover -->
-	<el-popover
-		ref="popoverRef"
-		:visible="popoverVisible"
-		:virtual-ref="virtualRef"
-		virtual-triggering
-		trigger="hover"
-		placement="top"
-		:width="150"
-		:show-after="500"
-		popper-class="feature-popover"
-	>
-		<template #default>
-			<div v-if="currentFeature">
-				<div v-for="(value, key) in featureProperties" :key="key">
-					<template v-if="key !== 'geometry' && key !== 'geom'">
-						<strong>{{ key }}:</strong> {{ value }}
-					</template>
-				</div>
-			</div>
-		</template>
-	</el-popover>
-	<operateDrawer ref="drawerRef" />
-	<searchDrawer ref="seachRef" @search-change="searchChange" />
+  <!-- 使用 element-plus 的 popover -->
+  <el-popover ref="popoverRef"
+              :visible="popoverVisible"
+              :virtual-ref="virtualRef"
+              virtual-triggering
+              trigger="hover"
+              placement="top"
+              :width="180"
+              :show-after="500"
+              popper-class="feature-popover">
+    <template #default>
+      <div v-if="currentFeature">
+        <div v-for="(value, key) in featureProperties"
+             :key="key">
+          <template v-if="key !== 'geometry' && key !== 'geom'&&value">
+            <strong>{{ key }}：</strong> {{ value }}
+          </template>
+        </div>
+      </div>
+    </template>
+  </el-popover>
+  <operateDrawer ref="drawerRef" />
+  <searchDrawer ref="seachRef"
+                @search-change="searchChange" />
 </template>
 
 <script setup lang="ts">
@@ -54,11 +62,13 @@ import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
+import { defaults as defaultInteractions } from 'ol/interaction/defaults';
 import XYZ from 'ol/source/XYZ';
 import { Fill, Stroke, Style } from 'ol/style';
 import Overlay from 'ol/Overlay';
 import * as turf from '@turf/turf';
 import { MapBrowserEvent } from 'ol';
+import { features } from 'process';
 
 onMounted(() => {
 	NextLoading.done();
@@ -85,7 +95,12 @@ const virtualRef = reactive({
 	}),
 });
 const currentFeature = ref(null);
-const featureProperties = ref({});
+// Define an interface for feature properties
+interface FeatureProperties {
+	[key: string]: any; // Allow any key with any value
+}
+// Update the featureProperties ref type
+const featureProperties = ref<FeatureProperties>({});
 const mousePosition = reactive({ x: 0, y: 0 });
 const popoverRef = ref();
 
@@ -140,6 +155,8 @@ const drawerRef = ref();
 const openDrawer = () => {
 	drawerRef.value.open(selectedFeature.value);
 };
+const vectorLayerNode = ref<VectorLayer | null>(null);
+const vectorLayerLine = ref<VectorLayer | null>(null);
 const initOl = () => {
 	// WFS 数据源
 	const vectorSource = new VectorSource({
@@ -160,11 +177,11 @@ const initOl = () => {
 	vectorSource.once('featuresloadend', () => {
 		// 保存原始要素
 		originalNodeFeatures = vectorSource.getFeatures();
+		console.log(originalNodeFeatures);
 	});
-	
 
 	// WFS 图层
-	const vectorLayerNode = new VectorLayer({
+	vectorLayerNode.value = new VectorLayer({
 		source: vectorSource,
 		style: new Style({
 			fill: new Fill({
@@ -191,12 +208,13 @@ const initOl = () => {
 			'outputFormat=application/json&' +
 			'srsName=EPSG:4326',
 	});
-  vectorSourceLine.once('featuresloadend', () => {
+	vectorSourceLine.once('featuresloadend', () => {
 		// 保存原始要素
 		originalLineFeatures = vectorSourceLine.getFeatures();
+		console.log(originalLineFeatures);
 	});
 	// WFS 图层
-	const vectorLayerLine = new VectorLayer({
+	vectorLayerLine.value = new VectorLayer({
 		source: vectorSourceLine,
 		style: new Style({
 			stroke: new Stroke({
@@ -231,14 +249,18 @@ const initOl = () => {
 					url: 'https://webst02.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=8',
 				}),
 			}),
-			vectorLayerLine,
-			vectorLayerNode, // WFS图层
+
+			vectorLayerLine.value,
+			vectorLayerNode.value, // WFS图层
 		],
 		view: new View({
-			// 使用WMS的bbox围设置初始视图
+			// 使用WMS的bbox围设初始视图
 			center: [120.78931808471699, 23.621544837951505],
 			zoom: 8,
 			projection: 'EPSG:4326',
+		}),
+		interactions: defaultInteractions({
+			doubleClickZoom: false, //屏蔽双击放大事件
 		}),
 		overlays: [popup], // 添加overlay到地图
 	});
@@ -248,7 +270,7 @@ const initOl = () => {
 		const coordinate = evt.coordinate;
 
 		// 清除所有要素
-		vectorLayerNode.getSource().clear();
+		vectorLayerNode.value.getSource().clear();
 		// 创建圆形
 		const point = turf.point([coordinate[0], coordinate[1]]);
 		const circle = turf.circle(point, 88, {
@@ -270,7 +292,7 @@ const initOl = () => {
 		);
 		// 重新添加原始要素并检查相交
 		originalNodeFeatures.forEach((feature) => {
-			vectorLayerNode.getSource().addFeature(feature);
+			vectorLayerNode.value.getSource().addFeature(feature);
 
 			// 将 OpenLayers Feature 转换为 GeoJSON 格式
 			const format = new GeoJSON();
@@ -300,7 +322,7 @@ const initOl = () => {
 								}),
 							})
 						);
-						vectorLayerNode.getSource().addFeature(intersectionFeature);
+						vectorLayerNode.value.getSource().addFeature(intersectionFeature);
 					}
 				} catch (error) {
 					console.warn('Error checking intersection:', error);
@@ -308,15 +330,16 @@ const initOl = () => {
 			}
 		});
 
-		vectorLayerNode.getSource().addFeature(circleFeature);
+		vectorLayerNode.value.getSource().addFeature(circleFeature);
 	});
 	// 修改鼠标移动事件处理
 	map.on('pointermove', function (evt: MapBrowserEvent<MouseEvent>) {
 		const pixel = evt.pixel;
-		const feature = map.forEachFeatureAtPixel(pixel, function (feature) {
-			return feature;
+		const features: any[] = [];
+		map.forEachFeatureAtPixel(pixel, function (feature) {
+			features.push(feature);
 		});
-
+		const feature = features[features.length - 1];
 		// 更新鼠标位置
 		const mapElement = document.getElementById('olMap');
 		if (mapElement) {
@@ -325,16 +348,29 @@ const initOl = () => {
 		}
 
 		if (feature) {
-			const layer = feature.get('layer');
-			// console.log('当前图层：', layer);
 			// 更新当前要素和属性
 			currentFeature.value = feature;
-			const { name } = feature.getProperties();
-			featureProperties.value = {
-				名称: name,
-				经度: evt.coordinate[0].toFixed(6),
-				纬度: evt.coordinate[1].toFixed(6),
-			};
+			const { flag, name, centroid_x, centroid_y, rating, voltage, plant_outp, plant_sour } = feature.getProperties();
+
+			if (typeof flag !== 'undefined') {
+				featureProperties.value = {
+					名称: name,
+					经度: centroid_x,
+					纬度: centroid_y,
+					电压等级: voltage,
+				};
+				if (flag === 1) {
+					featureProperties.value['容量'] = rating;
+				} else {
+					featureProperties.value['装机容量'] = plant_outp;
+					featureProperties.value['发电厂类型'] = plant_sour;
+				}
+			} else {
+				featureProperties.value = {
+					名称: name,
+					电压等级: voltage,
+				};
+			}
 
 			popoverVisible.value = true;
 			// 设置鼠标样式
@@ -346,7 +382,7 @@ const initOl = () => {
 			currentFeature.value = null;
 			featureProperties.value = {};
 
-			// 重置鼠标样式
+			// 重���鼠标样式
 			if (mapElement) {
 				mapElement.style.cursor = '';
 			}
@@ -366,7 +402,7 @@ const initOl = () => {
 			features.push(feature);
 		});
 
-		if (features.length) {
+		if (features.length && typeof features[features.length - 1].getProperties().flag !== 'undefined') {
 			// 阻止地图缩放
 			evt.preventDefault();
 			// 更新选中的要素和属性
@@ -377,34 +413,77 @@ const initOl = () => {
 	});
 };
 const searchChange = (query: any) => {
-	console.log(query);
-	let filterFeature: any[] = [];
+	let filterFeatures: any[] = [];
 	let paramsKey = [];
 	if (query.searchType === 'node') {
-		filterFeature = originalNodeFeatures.filter((feature: any) => {
-			let flag = true;
-			paramsKey = ['addr_provi', 'name', 'name_zh', 'rating', 'voltage', 'flag', 'plant_outp', 'plant_sour'];
-      for (let i = 0; i < paramsKey.length; i++) {
-					if (feature.get(paramsKey[i]).indexOf(query[paramsKey[i]])===-1) {
-						flag = false;
-						break;
-					}
+		filterFeatures = originalNodeFeatures.filter((feature: any) => {
+			let searchFlag = true;
+
+			paramsKey = ['flag', 'addr_provi', 'name', 'name_zh', 'voltage'];
+			if (query.flag === 1) {
+				paramsKey.push('rating');
+			} else {
+				paramsKey.concat(['plant_outp', 'plant_sour']);
+			}
+			for (let i = 0; i < paramsKey.length; i++) {
+				let featureValue = feature.get(paramsKey[i]);
+				let searchValue = query[paramsKey[i]];
+				if (searchValue === '') {
+					continue;
 				}
-        return flag;
+				// let finded = false;
+				// switch (typeof featureValue) {
+				// 	case 'number':
+				// 		finded = featureValue == searchValue;
+				// 		break;
+				// 	case 'string':
+				// 		finded = featureValue.includes(searchValue);
+				// 		break;
+				// }
+				if (featureValue != searchValue) {
+					searchFlag = false;
+					break;
+				}
+			}
+			return searchFlag;
 		});
-	}else{
-    filterFeature = originalLineFeatures.filter((feature: any) => {
-			let flag = true;
-			paramsKey = [ 'name', 'voltage'];
-      for (let i = 0; i < paramsKey.length; i++) {
-					if (feature.get(paramsKey[i]).indexOf(query[paramsKey[i]])===-1) {
-            flag = false;
-            break;
-          }
-      }
-      return flag;
-    })
-  }
+		vectorLayerNode.value.getSource().clear();
+		filterFeatures.forEach((f: any) => {
+			vectorLayerNode.value.getSource().addFeature(f);
+		});
+	} else {
+		filterFeatures = originalLineFeatures.filter((feature: any) => {
+			let searchFlag = true;
+			paramsKey = ['name', 'voltage'];
+			for (let i = 0; i < paramsKey.length; i++) {
+				let featureValue = feature.get(paramsKey[i]);
+				let searchValue = query[paramsKey[i]];
+				if (searchValue === '') {
+					continue;
+				}
+				if (featureValue != searchValue) {
+					searchFlag = false;
+					break;
+				}
+			}
+			return searchFlag;
+		});
+		vectorLayerLine.value.getSource().clear();
+		filterFeatures.forEach((f: any) => {
+			vectorLayerLine.value.getSource().addFeature(f);
+		});
+	}
+	console.log(filterFeatures);
+};
+const resetMap = () => {
+	vectorLayerNode.value.getSource().clear();
+	originalNodeFeatures.forEach((f: any) => {
+		vectorLayerNode.value.getSource().addFeature(f);
+	});
+	vectorLayerLine.value.getSource().clear();
+	originalLineFeatures.forEach((f: any) => {
+		vectorLayerLine.value.getSource().addFeature(f);
+	});
 };
 const seachRef = ref();
 const searchMap = () => {
@@ -457,5 +536,8 @@ const searchMap = () => {
 }
 .custom-search {
 	right: 40px;
+}
+.custom-reset {
+	right: 70px;
 }
 </style>
