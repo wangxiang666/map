@@ -1,112 +1,53 @@
 <template>
-  <div class="data-list">
-    <!-- 搜索区域 -->
-    <div class="search-area">
-      <div class="search-item">
-        <span class="label">名称</span>
-        <el-input v-model="tableData.param.name"
-                  class="custom-input" />
-      </div>
-      <div class="search-item">
-        <span class="label">毁伤目标</span>
-        <el-input v-model="tableData.param.deduction"
-                  class="custom-input" />
-      </div>
-      <el-button type="primary"
-                 @click="EvaluationMgrList"
-                 class="bg-form-btn">查询</el-button>
-      <el-button type="primary"
-                 @click="handleAdd"
-                 v-auth="'api/v1/sim/evaluationMgr/add'"
-                 class="bg-form-btn">新增</el-button>
-      <el-button type="primary"
-                 @click="showTree"
-                 class="bg-form-btn">评估指标</el-button>
-      <el-button type="primary"
-                 class="bg-form-btn">评估算法</el-button>
-    </div>
+	<div class="data-list">
+		<!-- 搜索区域 -->
+		<div class="search-area">
+			<div class="search-item">
+				<span class="label">名称</span>
+				<el-input v-model="tableData.param.name" class="custom-input" />
+			</div>
+			<!-- <div class="search-item">
+				<span class="label">毁伤目标</span>
+				<el-input v-model="tableData.param.deduction" class="custom-input" />
+			</div> -->
+			<el-button type="primary" @click="EvaluationMgrList" class="bg-form-btn">查询</el-button>
+			<el-button type="primary" @click="handleAdd" v-auth="'api/v1/sim/evaluationMgr/add'" class="bg-form-btn">新增</el-button>
+			<el-button type="primary" @click="showTree" class="bg-form-btn">评估指标</el-button>
+			<el-button type="primary" class="bg-form-btn">评估算法</el-button>
+		</div>
 
-    <el-table v-loading="loading"
-              :data="tableData.data"
-              @selection-change="handleSelectionChange">
-      <el-table-column type="selection"
-                       width="55"
-                       align="center" />
-      <el-table-column label="序号"
-                       align="center"
-                       prop="id"
-                       min-width="100px" />
-      <el-table-column label="名称"
-                       align="center"
-                       prop="name"
-                       min-width="100px" />
-      <el-table-column label="推演任务"
-                       align="center"
-                       prop="linkedDeduction.name"
-                       min-width="100px" />
-      <el-table-column label="评估指标"
-                       align="center"
-                       prop="linkedTarget.name"
-                       min-width="100px" />
-      <el-table-column label="评估算法"
-                       align="center"
-                       prop="algorithm"
-                       :formatter="algorithmFormat"
-                       min-width="100px" />
-      <el-table-column label="评估结果"
-                       align="center"
-                       prop="result"
-                       min-width="100px" />
-      <el-table-column label="状态"
-                       align="center"
-                       prop="status"
-                       :formatter="statusFormat"
-                       min-width="100px" />
-      <el-table-column label="描述"
-                       align="center"
-                       prop="note"
-                       min-width="100px" />
-      <el-table-column label="操作员"
-                       align="center"
-                       prop="operator"
-                       min-width="100px" />
-      <el-table-column label="创建时间"
-                       align="center"
-                       prop="createdAt"
-                       min-width="100px">
-        <template #default="scope">
-          <span>{{ proxy.parseTime(scope.row.createdAt, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作"
-                       align="center"
-                       class-name="small-padding"
-                       min-width="200px"
-                       fixed="right">
-        <template #default="scope">
-          <el-button type="primary"
-                     link
-                     @click="handleView(scope.row)"
-                     v-auth="'api/v1/sim/evaluationMgr/get'">查看</el-button>
-          <el-button type="primary"
-                     link
-                     @click="handleUpdate(scope.row)"
-                     v-auth="'api/v1/sim/evaluationMgr/edit'">编辑</el-button>
-          <el-button type="primary"
-                     link
-                     @click="handleDelete(scope.row)"
-                     v-auth="'api/v1/sim/evaluationMgr/delete'">删除</el-button>
-          <el-button type="primary"
-                     link>评估</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    <pagination v-show="tableData.total>0"
-                :total="tableData.total"
-                v-model:page="tableData.param.pageNum"
-                v-model:limit="tableData.param.pageSize"
-                @pagination="EvaluationMgrList" />
-  </div>
+		<el-table v-loading="loading" :data="tableData.data" @selection-change="handleSelectionChange">
+			<el-table-column type="selection" width="55" align="center" />
+			<el-table-column label="序号" align="center" prop="id" min-width="100px" />
+			<el-table-column label="名称" align="center" prop="name" min-width="100px" />
+			<el-table-column label="推演任务" align="center" prop="linkedDeduction.name" min-width="100px" />
+			<el-table-column label="评估指标" align="center" prop="linkedTarget.name" min-width="100px" />
+			<el-table-column label="评估算法" align="center" prop="algorithm" :formatter="algorithmFormat" min-width="100px" />
+	
+			<el-table-column label="状态" align="center" prop="status" :formatter="statusFormat" min-width="100px" />
+			<el-table-column label="操作员" align="center" prop="operator" min-width="100px" />
+			<el-table-column label="创建时间" align="center" prop="createdAt" min-width="100px">
+				<template #default="scope">
+					<span>{{ proxy.parseTime(scope.row.createdAt, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
+				</template>
+			</el-table-column>
+			<el-table-column label="操作" align="center" class-name="small-padding" min-width="200px" fixed="right">
+				<template #default="scope">
+					<el-button type="primary" link @click="handleView(scope.row)" v-auth="'api/v1/sim/evaluationMgr/get'">查看</el-button>
+					<el-button type="primary" link @click="handleUpdate(scope.row)" v-auth="'api/v1/sim/evaluationMgr/edit'">编辑</el-button>
+					<el-button type="primary" link @click="handleDelete(scope.row)" v-auth="'api/v1/sim/evaluationMgr/delete'">删除</el-button>
+					<el-button type="primary" link>评估</el-button>
+				</template>
+			</el-table-column>
+		</el-table>
+		<pagination
+			v-show="tableData.total > 0"
+			:total="tableData.total"
+			v-model:page="tableData.param.pageNum"
+			v-model:limit="tableData.param.pageSize"
+			@pagination="EvaluationMgrList"
+		/>
+	</div>
 </template>
 
 <script lang="ts">

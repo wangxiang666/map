@@ -1,78 +1,38 @@
 <template>
-  <div class="add-form">
-    <h2 class="title">{{mode==='view'?'查看':!formData.id || formData.id==0?'新增':'编辑'}}评估任务</h2>
-    <el-form ref="formRef"
-             :model="formData"
-             :rules="rules"
-             label-width="auto"
-             :disabled="mode === 'view'"
-             label-position="right">
-      <el-form-item label="名称"
-                    prop="name">
-        <el-input v-model="formData.name"
-                  placeholder="请输入名称" />
-      </el-form-item>
-      <el-form-item label="推演任务"
-                    prop="deduction">
-        <el-input v-model="formData.deduction"
-                  placeholder="请输入推演任务" />
-      </el-form-item>
-      <el-form-item label="评估指标"
-                    prop="target">
-        <el-select v-model="formData.target"
-                   placeholder="请选择评估指标">
-          <el-option v-for="item in targetOptions"
-                     :key="item.key"
-                     :label="item.value"
-                     :value="item.key"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="评估算法"
-                    prop="algorithm">
-        <el-select v-model="formData.algorithm"
-                   placeholder="请选择评估算法">
-          <el-option v-for="dict in sim_evaluation_algorithm"
-                     :key="dict.value"
-                     :label="dict.label"
-                     :value="dict.value"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="评估结果"
-                    prop="result">
-        <el-input v-model="formData.result"
-                  placeholder="请输入评估结果" />
-      </el-form-item>
-      <el-form-item label="状态"
-                    prop="status">
-        <el-radio-group v-model="formData.status">
-          <el-radio v-for="dict in sim_evaluation_status"
-                    :key="dict.value"
-                    :label="dict.value">{{dict.label }}</el-radio>
-        </el-radio-group>
-      </el-form-item>
-      <el-form-item label="描述"
-                    prop="note">
-        <el-input v-model="formData.note"
-                  type="textarea"
-                  placeholder="请输入描述" />
-      </el-form-item>
-      <el-form-item label="操作员"
-                    prop="operator">
-        <el-input v-model="formData.operator"
-                  placeholder="请输入操作员" />
-      </el-form-item>
+	<div class="add-form">
+		<h2 class="title">{{ mode === 'view' ? '查看' : !formData.id || formData.id == 0 ? '新增' : '编辑' }}评估任务</h2>
+		<el-form ref="formRef" :model="formData" :rules="rules" label-width="auto" :disabled="mode === 'view'" label-position="right">
+			<el-form-item label="名称" prop="name">
+				<el-input v-model="formData.name" placeholder="请输入名称" />
+			</el-form-item>
 
-    </el-form>
-    <div class="submit-bottom">
-      <el-button type="primary"
-                 class="submit-btn bg-form-btn"
-                 v-if="mode === 'edit'"
-                 @click="onSubmit">确认</el-button>
-      <el-button type="primary"
-                 class="submit-btn bg-form-btn"
-                 @click="onCancel">返回</el-button>
-    </div>
-  </div>
+			<el-form-item label="推演任务" prop="deduction">
+				<el-select v-model="formData.deduction" placeholder="请选择推演任务">
+					<el-option v-for="item in deductionList" :key="item.id" :label="item.name" :value="item.id" />
+				</el-select>
+			</el-form-item>
+
+
+			<el-form-item label="评估指标" prop="target">
+				<el-select v-model="formData.target" placeholder="请选择评估指标">
+					<el-option v-for="item in targetOptions" :key="item.key" :label="item.value" :value="item.key"></el-option>
+				</el-select>
+			</el-form-item>
+			<el-form-item label="评估算法" prop="algorithm">
+				<el-select v-model="formData.algorithm" placeholder="请选择评估算法">
+					<el-option v-for="dict in sim_evaluation_algorithm" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
+				</el-select>
+			</el-form-item>
+			
+			<el-form-item label="描述" prop="note">
+				<el-input v-model="formData.note" type="textarea" placeholder="请输入描述" />
+			</el-form-item>
+		</el-form>
+		<div class="submit-bottom">
+			<el-button type="primary" class="submit-btn bg-form-btn" v-if="mode === 'edit'" @click="onSubmit">确认</el-button>
+			<el-button type="primary" class="submit-btn bg-form-btn" @click="onCancel">返回</el-button>
+		</div>
+	</div>
 </template>
 
 <script lang="ts">
@@ -89,6 +49,7 @@ import {
 	listEvaluationTargetMgr,
 	linkedDataSearch,
 } from '/@/api/sim/EvaluationMgr';
+import { listDeductionMgr } from '/@/api/sim/DeductionMgr';
 import { EvaluationMgrTableColumns, EvaluationMgrInfoData, EvaluationMgrTableDataState, EvaluationMgrEditState } from './model';
 export default defineComponent({
 	name: 'apiV1SimEvaluationMgrEdit',
@@ -125,9 +86,24 @@ export default defineComponent({
 			// 表单校验
 			rules: {
 				name: [{ required: true, message: '名称不能为空', trigger: 'blur' }],
-				updatedAt: [{ required: true, message: '更新时间不能为空', trigger: 'blur' }],
+				deduction: [{ required: true, message: '推演任务不能为空', trigger: 'blur' }],
 			},
+			deductionList: [],
 		});
+
+
+		onMounted(() => {
+			fetchDeductionList();
+		});
+
+		const fetchDeductionList= () => {
+			listDeductionMgr().then((res: any) => {
+				let list = res.data.list ?? [];
+				state.deductionList = list;
+			});
+		};
+
+
 		// 打开弹窗
 		const openDialog = (row?: EvaluationMgrInfoData, flag?: 'string' | undefined) => {
 			mode.value = flag;

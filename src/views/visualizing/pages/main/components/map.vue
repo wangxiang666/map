@@ -168,7 +168,7 @@ const initOl = () => {
 			'service=WFS&' +
 			'version=2.0.0&' +
 			'request=GetFeature&' +
-			'typeName=taiwan:node&' +
+			'typeName=taiwan:power_node&' +
 			'outputFormat=application/json&' +
 			'srsName=EPSG:4326',
 	});
@@ -204,7 +204,7 @@ const initOl = () => {
 			'service=WFS&' +
 			'version=2.0.0&' +
 			'request=GetFeature&' +
-			'typeName=taiwan:line&' +
+			'typeName=taiwan:power_line&' +
 			'outputFormat=application/json&' +
 			'srsName=EPSG:4326',
 	});
