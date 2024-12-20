@@ -68,7 +68,7 @@ import { Fill, Stroke, Style } from 'ol/style';
 import Overlay from 'ol/Overlay';
 import * as turf from '@turf/turf';
 import { MapBrowserEvent } from 'ol';
-import { features } from 'process';
+import { fromLonLat, toLonLat } from 'ol/proj';
 
 onMounted(() => {
 	NextLoading.done();
@@ -128,6 +128,9 @@ const getScale = () => {
 // 修改全屏切换方法
 const toggleFullScreen = () => {
 	isFullScreen.value = !isFullScreen.value;
+	updateSizeMap();
+};
+const updateSizeMap = () => {
 	const mapElement = document.getElementById('olMap');
 	if (mapElement) {
 		if (isFullScreen.value) {
@@ -329,7 +332,7 @@ const initOl = () => {
 	// 				const intersection = turf.intersect(multiPolygonFeature, circle);
 	// 				if (intersection) {
 	// 					// console.log('Found intersection:', intersection, '相交面积：', turf.area(intersection));
-	// 					// 这里可以处理相交的结果
+	// 					// 这里可以处��相交的结果
 	// 					const intersectionFeature = new GeoJSON().readFeature(intersection);
 	// 					intersectionFeature.setStyle(
 	// 						new Style({
@@ -369,7 +372,7 @@ const initOl = () => {
 		}
 
 		if (feature) {
-			// 更新当前要素和属性
+			// 更新当前要素和��性
 			currentFeature.value = feature;
 			const { flag, name, centroid_x, centroid_y, rating, voltage, plant_outp, plant_sour } = feature.getProperties();
 
@@ -403,7 +406,7 @@ const initOl = () => {
 			currentFeature.value = null;
 			featureProperties.value = {};
 
-			// 重���鼠标样式
+			// 重置鼠标样式
 			if (mapElement) {
 				mapElement.style.cursor = '';
 			}
@@ -510,6 +513,37 @@ const seachRef = ref();
 const searchMap = () => {
 	seachRef.value.open();
 };
+
+// 推演相关
+const step1Play = (name: string) => {
+	// const
+	// var coordinates = fromLonLat([longitude, latitude]);
+	// 	map.getView().setCenter(coordinates);
+	// 	map.getView().setZoom(16);
+	// 获取feature的几何形状
+	const feature = originalNodeFeatures.find((feature: any) => {
+		return feature.get('name') === name;
+	});
+	console.log(feature);
+	const geometry = feature.getGeometry();
+
+	// 使用fit方法将视图聚焦到feature上
+	// map.getView().fit(geometry, {
+	// 	duration: 1000, // 动画持续时间，以毫秒为单位
+	// 	maxZoom: 10,
+	// });
+
+	// setTimeout(() => {
+	const coordinates = fromLonLat([119.306239, 26.075302]);
+	console.log('coordinates', coordinates);
+	map.getView().setCenter(coordinates);
+	// }, 2000);
+};
+
+defineExpose({
+	step1Play,
+	updateSizeMap,
+});
 </script>
 
 <style lang="scss" scoped>

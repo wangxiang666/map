@@ -1,47 +1,106 @@
 <!--
  * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-11 14:20:28
- * @LastEditors: 王翔
- * @LastEditTime: 2024-12-19 18:41:54
+ * @LastEditors: wangxiang666 534167821@qq.com
+ * @LastEditTime: 2024-12-19 23:35:57
  * @FilePath: /es-big-screen/Users/wangxiang/ownSystem/map/src/views/visualizing/pages/taskManage/components/leftMap.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <template>
-  <div class="left-map"
-       :class="{'is-full':deductStatus}">
+  <div class="map-container">
+    <div class="left-map"
+         :class="{'is-full':deductStatus}">
 
-    <div class="deduction-pannel"
-         v-if="deductStatus">
-      <div class="deduction-title">
-        任务管理器
-      </div>
-      <div class="deduction-control">
-        <div class="gradient-label">场景控制</div>
-        <div v-for="item in controls"
-             class="control-item"
-             :key="item"
-             @click="handleControl(item)">
-          <img :src="`/@/views/visualizing/images/deduction/${item}.png`"
-               alt="">
+      <div class="deduction-pannel"
+           v-if="deductStatus">
+        <div class="deduction-title"
+             @click="backToList">
+          任务管理器
+        </div>
+        <div class="deduction-control">
+          <div class="gradient-label">场景控制</div>
+          <div v-for="item in controls"
+               class="control-item"
+               :key="item.directive"
+               @click="handleControl(item.directive)">
+            <img :src="item.img"
+                 alt="">
+          </div>
         </div>
       </div>
-    </div>
-    <div class="map-container">
-      <mainScreen></mainScreen>
+      <div class="map-container">
+        <mainScreen ref="mapViewRef"></mainScreen>
+      </div>
     </div>
   </div>
 </template>
 <script setup>
 import mainScreen from '/@/views/visualizing/pages/main/components/map.vue'
+import play from '../../../images/deduction/play.png'
+import stop from '../../../images/deduction/stop.png'
+import pre from '../../../images/deduction/pre.png'
+import next from '../../../images/deduction/next.png'
+import over from '../../../images/deduction/over.png'
+import { ref, watch } from 'vue'
 const props = defineProps({
   deductStatus: {
     type: Boolean,
     default: false
+  },
+  destination: {
+    type: String
   }
 })
-const controls = ['play', 'stop', 'pre', 'next', 'over']
+watch(() => props.deductStatus, () => {
+  mapViewRef.value.updateSizeMap()
+}, { deep: true, immediately: true })
+const emit = defineEmits(['backToList'])
+const backToList = () => {
+  emit('backToList')
+}
+const controls = ref(
+  [
+    {
+      directive: 'play',
+      img: play
+    },
+    {
+      directive: 'stop',
+      img: stop
+    },
+    {
+      directive: 'pre',
+      img: pre
+    },
+    {
+      directive: 'next',
+      img: next
+    },
+    {
+      directive: 'over',
+      img: over
+    }
+  ]
+)
 const handleControl = (directive) => {
-  console.log(directive)
+  switch (directive) {
+    case 'play':
+      handlePlay()
+      break;
+    case 'stop':
+      break;
+    case 'pre':
+      break;
+    case 'next':
+      break;
+    case 'over':
+      break;
+  }
+}
+const timer = ref(null)
+const mapViewRef = ref(null)
+const handlePlay = () => {
+  mapViewRef.value.step1Play(props.destination)
 }
 </script>
 <style lang="scss" scoped>
@@ -75,6 +134,7 @@ const handleControl = (directive) => {
 		text-align: center;
 		line-height: 85px;
 		margin: 0 auto;
+		pointer-events: all;
 	}
 	.deduction-control {
 		display: flex;
@@ -124,6 +184,10 @@ const handleControl = (directive) => {
 	background: none;
 	padding: 0 !important;
 	z-index: 9;
+}
+.map-container {
+	width: 643px;
+	height: 100%;
 }
 .left-map {
 	width: 643px;

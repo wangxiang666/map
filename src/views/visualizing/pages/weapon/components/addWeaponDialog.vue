@@ -1,5 +1,13 @@
 <!--
  * @Author: wangxiang666 534167821@qq.com
+ * @Date: 2024-12-18 21:19:54
+ * @LastEditors: wangxiang666 534167821@qq.com
+ * @LastEditTime: 2024-12-19 22:51:28
+ * @FilePath: \map\src\views\visualizing\pages\weapon\components\addWeaponDialog.vue
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+-->
+<!--
+ * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-17 20:30:40
  * @LastEditors: wangxiang666 534167821@qq.com
  * @LastEditTime: 2024-12-18 22:52:24
@@ -114,7 +122,7 @@
 </template>
 <script setup>
 import { computed, nextTick, ref } from 'vue';
-import { getAssaultWeaponMgr, addAssaultWeaponMgr, updateAssaultWeaponMgr, configAssaultWeaponParam } from '/@/api/sim/AssaultWeaponMgr';
+import { getAssaultWeaponMgr, addAssaultWeaponMgr, updateAssaultWeaponMgr, configAssaultWeaponParam, uploadImage } from '/@/api/sim/AssaultWeaponMgr';
 import { addAssaultWeaponParam } from '/@/api/sim/AssaultWeaponParam'
 import { ElMessage } from 'element-plus';
 import stepChartImg from './stepChartImg.vue';
@@ -339,30 +347,36 @@ const onSubmit = () => {
     if (valid) {
       loading.value = true;
       const form = new FormData();
-      for (let i in formData.value) {
-        if (i !== 'file') {
-          form.append(i, formData.value[i])
+      // for (let i in formData.value) {
+      //   if (i !== 'file') {
+      //     form.append(i, formData.value[i])
+      //   } else {
+      //     // form.append(i, fileList.value[0].raw)
+      //   }
+      // }
+      form.append('file', fileList.value[0].raw)
+      uploadImage(form).then((res) => {
+        formData.value.image = res.data.name
+        formData.value.weaponType = props.weaponType
+        if (!formData.value.id || formData.value.id === 0) {
+          //添加
+          addAssaultWeaponMgr(formData.value).then((res) => {
+            weaponId.value = res.data.WeaponId
+            // emit('AssaultWeaponMgrList')
+          }).finally(() => {
+            loading.value = false;
+          })
         } else {
-          // form.append(i, fileList.value[0].raw)
+          //修改
+          updateAssaultWeaponMgr(formData.value).then(() => {
+            emit('AssaultWeaponMgrList')
+          }).finally(() => {
+            loading.value = false;
+          })
         }
-      }
-      form.append('weaponType', props.weaponType)
-      if (!formData.value.id || formData.value.id === 0) {
-        //添加
-        addAssaultWeaponMgr(form).then((res) => {
-          weaponId.value = res.data.WeaponId
-          // emit('AssaultWeaponMgrList')
-        }).finally(() => {
-          loading.value = false;
-        })
-      } else {
-        //修改
-        updateAssaultWeaponMgr(form).then(() => {
-          emit('AssaultWeaponMgrList')
-        }).finally(() => {
-          loading.value = false;
-        })
-      }
+      })
+      // form.append('weaponType', props.weaponType)
+
     }
   });
 };
