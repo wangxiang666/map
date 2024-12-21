@@ -1,30 +1,42 @@
 <template>
   <div class="display-container"
        v-loading="loading">
-    <div class="weapons-grid">
-      <div v-for="weapon in weapons"
-           :key="weapon.id"
-           class="weapon-card">
-        <!-- 武器图片占位 -->
-        <!-- <img :src="weapon.image"
-             class="weapon-image"> -->
-        <div class="weapon-image-placeholder"></div>
-        <div class="weapon-name">{{ weapon.name }}</div>
-        <el-button link
-                   class="delete-btn"
-                   @click="deleteWeapon(weapon.id)">
-          <el-icon>
-            <ele-Delete />
-          </el-icon>
-        </el-button>
-      </div>
-      <div class="weapon-card add"
-           @click="addWeapon">
-        <div class="weapon-image-placeholder">
-          <span>新增 +</span>
+    <el-scrollbar>
+      <div class="weapons-grid">
+        <div class="weapon-card add"
+             @click="addWeapon">
+          <div class="weapon-image-placeholder">
+            <span>新增 +</span>
+          </div>
         </div>
+        <div v-for="weapon in weapons"
+             :key="weapon.id"
+             class="weapon-card">
+          <div class="weapon-image-placeholder">
+            <el-image :src="proxy.getUpFileUrl('images/'+weapon.image)"
+                      scroll-container=".weapons-grid"
+                      lazy
+                      class="weapon-image">
+
+              <template #error>
+                <div class="image-slot">
+                  暂无图片
+                </div>
+              </template>
+            </el-image>
+          </div>
+          <div class="weapon-name">{{ weapon.name }}</div>
+          <el-button link
+                     class="delete-btn"
+                     @click="deleteWeapon(weapon.id)">
+            <el-icon>
+              <ele-Delete />
+            </el-icon>
+          </el-button>
+        </div>
+
       </div>
-    </div>
+    </el-scrollbar>
     <addWeaponDialog ref="addWeaponRef"
                      :weaponType="currentWeaponType"
                      @AssaultWeaponMgrList="AssaultWeaponMgrList"></addWeaponDialog>
@@ -32,7 +44,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, getCurrentInstance } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {
   listAssaultWeaponMgr,
@@ -42,7 +54,7 @@ import {
   updateAssaultWeaponMgr,
 } from '/@/api/sim/AssaultWeaponMgr';
 import addWeaponDialog from './addWeaponDialog.vue';
-
+const { proxy } = getCurrentInstance();
 const deleteWeapon = (id) => {
   ElMessageBox({
     closeOnClickModal: false,
@@ -55,7 +67,7 @@ const deleteWeapon = (id) => {
     buttonSize: 'default',
   })
     .then(async () => {
-      delAssaultWeaponMgr({ ids: [id] }).then(res => {
+      delAssaultWeaponMgr([id]).then(res => {
         if (res.code === 0) {
           ElMessage.success('删除成功');
           AssaultWeaponMgrList()
@@ -108,8 +120,10 @@ defineExpose({
 
 .weapons-grid {
 	display: grid;
+	height: 100%;
 	grid-template-columns: repeat(4, 1fr);
 	gap: 20px;
+	overflow-y: auto;
 }
 
 .weapon-card {
@@ -136,9 +150,23 @@ defineExpose({
 	font-size: 36px;
 	cursor: pointer;
 }
-
+.weapon-image {
+	width: calc(100% - 20px);
+	height: 170px;
+	margin-top: 20px;
+	.image-slot {
+		display: flex;
+		width: 100%;
+		height: 100%;
+		justify-content: center;
+		align-items: center;
+	}
+}
 .weapon-name {
 	color: #1890ff;
 	font-size: 24px;
+}
+:deep(.el-image__error) {
+	background: none;
 }
 </style>

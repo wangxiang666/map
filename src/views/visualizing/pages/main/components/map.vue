@@ -2,6 +2,7 @@
   <div id="olMap">
     <!-- 添加自定义全屏按钮 -->
     <div class="custom-tool custom-reset"
+         v-if="!deductStatus"
          @click="searchMap"
          title="查询">
       <el-icon>
@@ -10,13 +11,15 @@
     </div>
     <div class="custom-tool custom-search"
          @click="resetMap"
+         v-if="!deductStatus"
          title="恢复地图">
       <el-icon>
         <ele-RefreshLeft />
       </el-icon>
     </div>
     <div class="custom-tool custom-fullscreen"
-         @click="toggleFullScreen">
+         @click="toggleFullScreen"
+         v-if="!deductStatus">
       <el-icon>
         <ele-ScaleToOriginal v-if="isFullScreen" />
         <ele-FullScreen v-else />
@@ -77,7 +80,19 @@ import { Fill, Stroke, Style } from 'ol/style';
 import Overlay from 'ol/Overlay';
 import * as turf from '@turf/turf';
 import { MapBrowserEvent } from 'ol';
-import { fromLonLat, toLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat, transform } from 'ol/proj';
+import Point from 'ol/geom/Point';
+import Feature from 'ol/Feature';
+import Icon from 'ol/style/Icon';
+import { svgIcon } from '/@/views/visualizing/images/deduction/plane.js';
+import LineString from 'ol/geom/LineString';
+
+defineProps({
+	deductStatus: {
+		Boolean,
+		default: false,
+	},
+});
 
 onMounted(() => {
 	NextLoading.done();
@@ -139,10 +154,10 @@ const toggleFullScreen = () => {
 	isFullScreen.value = !isFullScreen.value;
 	updateSizeMap();
 };
-const updateSizeMap = () => {
+const updateSizeMap = (flag?: boolean) => {
 	const mapElement = document.getElementById('olMap');
 	if (mapElement) {
-		if (isFullScreen.value) {
+		if (isFullScreen.value || flag) {
 			const { scaleX, scaleY } = getScale();
 			mapElement.style.position = 'fixed';
 			mapElement.style.top = '0';
@@ -197,7 +212,7 @@ const initOl = () => {
 		source: vectorSource,
 		style: new Style({
 			fill: new Fill({
-				color: 'rgba(255, 0, 0, 0.4)',
+				color: 'rgba(255, 0, 0, 0)',
 			}),
 			stroke: new Stroke({
 				color: '#ff0000',
@@ -221,9 +236,9 @@ const initOl = () => {
 			'srsName=EPSG:4326',
 	});
 	vectorSourceLine.once('featuresloadend', () => {
-		// 保存原始要素
+		// 保存原���要素
 		originalLineFeatures = vectorSourceLine.getFeatures();
-		console.log(originalLineFeatures);
+		// console.log(originalLineFeatures);
 	});
 	// WFS 图层
 	vectorLayerLine.value = new VectorLayer({
@@ -253,7 +268,7 @@ const initOl = () => {
 			new TileLayer({
 				source: new XYZ({
 					url: 'https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
-					// crossOrigin: 'anonymous',
+					crossOrigin: 'anonymous',
 					// tileLoadFunction: function (imageTile, src) {
 					// 	// 使用滤镜 将白色修改为深色
 					// 	const img = new Image();
@@ -267,7 +282,7 @@ const initOl = () => {
 					// 		canvas.width = w;
 					// 		canvas.height = h;
 					// 		const context = canvas.getContext('2d');
-					// 		context.filter = 'grayscale(98%) invert(100%) sepia(20%) hue-rotate(180deg) saturate(1600%) brightness(80%) contrast(90%)';
+					// 		context.filter = 'brightness(0.7) contrast(2) grayscale(5) hue-rotate(360deg) opacity(1) saturate(1.8) sepia(0.94) invert(1)';
 					// 		context.drawImage(img, 0, 0, w, h, 0, 0, w, h);
 					// 		imageTile.getImage().src = canvas.toDataURL('image/png');
 					// 	};
@@ -340,8 +355,8 @@ const initOl = () => {
 	// 				// 现在可以使用 turf.intersect
 	// 				const intersection = turf.intersect(multiPolygonFeature, circle);
 	// 				if (intersection) {
-	// 					// console.log('Found intersection:', intersection, '相交面积：', turf.area(intersection));
-	// 					// 这里可以处��相交的结果
+	// 					// console.log('Found intersection:', intersection, '相面积：', turf.area(intersection));
+	// 					// 这里可以处理相交的结果
 	// 					const intersectionFeature = new GeoJSON().readFeature(intersection);
 	// 					intersectionFeature.setStyle(
 	// 						new Style({
@@ -381,7 +396,7 @@ const initOl = () => {
 		}
 
 		if (feature) {
-			// 更新当前要素和��性
+			// 更新当前要素和性
 			currentFeature.value = feature;
 			const { flag, name, centroid_x, centroid_y, rating, voltage, plant_outp, plant_sour } = feature.getProperties();
 
@@ -506,7 +521,6 @@ const searchChange = (query: any) => {
 			vectorLayerLine.value.getSource().addFeature(f);
 		});
 	}
-	console.log(filterFeatures);
 };
 const resetMap = () => {
 	vectorLayerNode.value.getSource().clear();
@@ -523,34 +537,118 @@ const searchMap = () => {
 	seachRef.value.open();
 };
 
+const deductioVectors = ref<{
+	targetFeature: Feature | undefined;
+	planeFeature: Feature<Point> | undefined;
+	deductionLayer: VectorLayer | undefined;
+	lineFeature: Feature | undefined;
+}>({
+	targetFeature: undefined,
+	planeFeature: undefined,
+	deductionLayer: undefined,
+	lineFeature: undefined,
+});
 // 推演相关
-const step1Play = (name: string) => {
-	// const
-	// var coordinates = fromLonLat([longitude, latitude]);
-	// 	map.getView().setCenter(coordinates);
-	// 	map.getView().setZoom(16);
+const stepPlay1 = (name: string) => {
 	// 获取feature的几何形状
 	const feature = originalNodeFeatures.find((feature: any) => {
 		return feature.get('name') === name;
 	});
-	console.log(feature);
+	deductioVectors.value.targetFeature = feature;
 	const geometry = feature.getGeometry();
 
 	// 使用fit方法将视图聚焦到feature上
-	// map.getView().fit(geometry, {
-	// 	duration: 1000, // 动画持续时间，以毫秒为单位
-	// 	maxZoom: 10,
-	// });
+	map.getView().fit(geometry, {
+		duration: 1000, // 动画持续时间，以毫秒为单位
+		maxZoom: 14,
+	});
+};
+const stepPlay2 = () => {
+	map.getView().animate({
+		zoom: 7,
+		duration: 1000,
+	});
+	const point = [119.306239, 26.075302];
+	const { centroid_x, centroid_y } = deductioVectors.value.targetFeature.getProperties();
 
-	// setTimeout(() => {
-	const coordinates = fromLonLat([119.306239, 26.075302]);
-	console.log('coordinates', coordinates);
-	map.getView().setCenter(coordinates);
-	// }, 2000);
+	// Create line feature
+	const lineFeature = new Feature({
+		geometry: new LineString([point, [centroid_x, centroid_y]]),
+	});
+
+	// Line style
+	const lineStyle = new Style({
+		stroke: new Stroke({
+			color: '#FF0000',
+			width: 4,
+			lineDash: [5, 5], // Optional: creates dashed line
+		}),
+	});
+	lineFeature.setStyle(lineStyle);
+
+	// Create plane icon feature
+	const iconFeature = new Feature({
+		geometry: new Point(point),
+	});
+
+	const iconStyle = new Style({
+		image: new Icon({
+			src: svgIcon,
+			anchor: [0.5, 0.5],
+			anchorXUnits: 'fraction',
+			anchorYUnits: 'fraction',
+			scale: 0.05,
+		}),
+	});
+
+	const deductionLayer = new VectorLayer({
+		source: new VectorSource({
+			features: [lineFeature, iconFeature], // Add both features to the layer
+		}),
+	});
+
+	deductioVectors.value.planeFeature = iconFeature;
+	deductioVectors.value.lineFeature = lineFeature;
+	deductioVectors.value.deductionLayer = deductionLayer;
+	map.addLayer(deductionLayer);
+	iconFeature.setStyle(iconStyle);
+
+	setTimeout(() => {
+		startAnimation();
+	}, 2000);
+};
+const startAnimation = () => {
+	if (!deductioVectors.value.planeFeature || !map) return;
+	const { targetFeature, planeFeature, deductionLayer, lineFeature } = deductioVectors.value;
+	const start = planeFeature.getGeometry().getCoordinates();
+	const { centroid_x, centroid_y } = targetFeature.getProperties();
+	// const coordinates = targetFeature.getGeometry().getCoordinates();
+	// const end = coordinates[0][0][0];
+	const end = [centroid_x, centroid_y];
+	const duration = 3000; // 动画持续时间，单位毫秒
+	let elapsed = 0;
+
+	const animate = () => {
+		elapsed += 16; // 每次动画间隔16毫秒，约60fps
+		const t = elapsed / duration;
+		const x = start[0] + t * (end[0] - start[0]);
+		const y = start[1] + t * (end[1] - start[1]);
+
+		deductioVectors.value.planeFeature.getGeometry().setCoordinates([x, y]);
+		if (t < 1) {
+			requestAnimationFrame(animate);
+		}
+	};
+	requestAnimationFrame(animate);
 };
 
+const resetDeduction = () => {
+	deductioVectors.value.deductionLayer.getSource().clear();
+};
 defineExpose({
-	step1Play,
+	stepPlay1,
+	stepPlay2,
+	resetDeduction,
 	updateSizeMap,
 });
 </script>
@@ -560,6 +658,7 @@ defineExpose({
 	width: 100%;
 	height: 100%;
 	position: relative;
+	background: #040826;
 }
 
 // 修改 popover 样式

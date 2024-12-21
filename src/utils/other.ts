@@ -27,19 +27,19 @@ export function elSvg(app: App) {
  * @method const title = useTitle(); ==> title()
  */
 export function useTitle() {
-	const stores = useThemeConfig(pinia);
-	const { themeConfig } = storeToRefs(stores);
-	nextTick(() => {
-		let webTitle = '';
-		let globalTitle: string = themeConfig.value.globalTitle;
-		const { path, meta } = router.currentRoute.value;
-		if (path === '/login') {
-			webTitle = <any>meta.title;
-		} else {
-			webTitle = setTagsViewNameI18n(router.currentRoute.value);
-		}
-		document.title = `${webTitle} - ${globalTitle}` || globalTitle;
-	});
+	// const stores = useThemeConfig(pinia);
+	// const { themeConfig } = storeToRefs(stores);
+	// nextTick(() => {
+	// 	let webTitle = '';
+	// 	let globalTitle: string = themeConfig.value.globalTitle;
+	// 	const { path, meta } = router.currentRoute.value;
+	// 	if (path === '/login') {
+	// 		webTitle = <any>meta.title;
+	// 	} else {
+	// 		webTitle = setTagsViewNameI18n(router.currentRoute.value);
+	// 	}
+	// 	document.title = `${webTitle} - ${globalTitle}` || globalTitle;
+	// });
 }
 
 /**

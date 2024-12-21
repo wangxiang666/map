@@ -1,9 +1,9 @@
 <!--
  * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-18 21:19:54
- * @LastEditors: wangxiang666 534167821@qq.com
- * @LastEditTime: 2024-12-19 22:51:28
- * @FilePath: \map\src\views\visualizing\pages\weapon\components\addWeaponDialog.vue
+ * @LastEditors: 王翔
+ * @LastEditTime: 2024-12-21 16:36:04
+ * @FilePath: /es-big-screen/Users/wangxiang/ownSystem/map/src/views/visualizing/pages/weapon/components/addWeaponDialog.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 <!--
@@ -544,13 +544,13 @@ const resetForm = () => {
       needCompute: [
         {
           label: '圆形散布半径：',
-          key: 'radius',
+          key: 'dispersionRadius',
           value: '- -',
           unit: 'm'
         },
         {
           label: '圆形散布面积：',
-          key: 'area',
+          key: 'dispersionArea',
           value: '- -',
           unit: 'm²'
         },

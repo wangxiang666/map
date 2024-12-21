@@ -1,8 +1,8 @@
 <!--
  * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-11 14:20:28
- * @LastEditors: wangxiang666 534167821@qq.com
- * @LastEditTime: 2024-12-19 23:35:57
+ * @LastEditors: 王翔
+ * @LastEditTime: 2024-12-21 16:20:24
  * @FilePath: /es-big-screen/Users/wangxiang/ownSystem/map/src/views/visualizing/pages/taskManage/components/leftMap.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -27,9 +27,17 @@
                  alt="">
           </div>
         </div>
+        <div class="deduction-tasklist">
+          <div v-for="(item,index) in taskList"
+               :key="item.name"
+               :style="{'margin-left':item.margin}"
+               :class="{'task-item-active':index===currentStep-1}"
+               class="task-item">{{ item.name }}</div>
+        </div>
       </div>
       <div class="map-container">
-        <mainScreen ref="mapViewRef"></mainScreen>
+        <mainScreen ref="mapViewRef"
+                    :deductStatus="deductStatus"></mainScreen>
       </div>
     </div>
   </div>
@@ -56,8 +64,31 @@ watch(() => props.deductStatus, () => {
 }, { deep: true, immediately: true })
 const emit = defineEmits(['backToList'])
 const backToList = () => {
+  mapViewRef.value.resetDeduction()
   emit('backToList')
 }
+const taskList = ref([
+  {
+    name: '目标精准定位与属性展示',
+    margin: '80px'
+  },
+  {
+    name: '空中打击路径展示',
+    margin: '30px'
+  },
+  {
+    name: '高解析卫星视图',
+    margin: '0px'
+  },
+  {
+    name: '三维毁伤模拟与推演',
+    margin: '30px'
+  },
+  {
+    name: '毁伤范围实时展示与评估',
+    margin: '80px'
+  }
+])
 const controls = ref(
   [
     {
@@ -82,6 +113,7 @@ const controls = ref(
     }
   ]
 )
+const currentStep = ref(1)
 const handleControl = (directive) => {
   switch (directive) {
     case 'play':
@@ -90,17 +122,22 @@ const handleControl = (directive) => {
     case 'stop':
       break;
     case 'pre':
+      currentStep.value--
+      handlePlay()
       break;
     case 'next':
+      currentStep.value++
+      handlePlay()
       break;
     case 'over':
+      backToList()
       break;
   }
 }
 const timer = ref(null)
 const mapViewRef = ref(null)
 const handlePlay = () => {
-  mapViewRef.value.step1Play(props.destination)
+  mapViewRef.value[`stepPlay${currentStep.value}`](props.destination)
 }
 </script>
 <style lang="scss" scoped>
@@ -135,6 +172,11 @@ const handlePlay = () => {
 		line-height: 85px;
 		margin: 0 auto;
 		pointer-events: all;
+		cursor: pointer;
+		transition: all 0.3s;
+		&:hover {
+			transform: scale(1.1);
+		}
 	}
 	.deduction-control {
 		display: flex;
@@ -171,6 +213,31 @@ const handlePlay = () => {
 			border-bottom-right-radius: 52px;
 			font-size: 18px;
 			line-height: 52px;
+		}
+	}
+	.deduction-tasklist {
+		width: 300px;
+		height: 600px;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		position: absolute;
+		top: 245px;
+		right: -40px;
+
+		.task-item {
+			width: 220px;
+			height: 51px;
+			background: url('../../../images/deduction/task-item.png') no-repeat;
+			background-size: 100% 100%;
+			line-height: 51px;
+			text-align: center;
+			color: #fff;
+			font-size: 18px;
+			transition: all 0.3s;
+		}
+		.task-item-active {
+			color: #1e90ff;
 		}
 	}
 }
