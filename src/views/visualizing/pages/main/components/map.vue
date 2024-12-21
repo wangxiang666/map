@@ -31,9 +31,18 @@
               virtual-triggering
               trigger="hover"
               placement="top"
-              :width="180"
+              :width="250"
               :show-after="500"
-              popper-class="feature-popover">
+              popper-class="feature-popover"
+			  :popper-style="{
+              backgroundColor: 'rgba(0, 0, 255, 0.3)', // 设置背景色为蓝色透明度90%
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)', // 增加阴影效果
+              padding: '10px',
+              color: '#00ff00', // 设置字体颜色为绿色
+              transition: 'all 0.3s ease', // 添加过渡动画效果
+            }">
     <template #default>
       <div v-if="currentFeature">
         <div v-for="(value, key) in featureProperties"

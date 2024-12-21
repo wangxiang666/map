@@ -36,11 +36,11 @@ const currentSrc = ref('');
 function handleCategorySelect(item) {
   // 根据不同的选择加载不同的 WebGL 页面
   if (item === '火力发电厂') {
-    currentSrc.value = 'http://127.0.0.1:8081/webgl-huodian/'; // 替换为实际的 WebGL 页面路径
+    currentSrc.value = 'http://127.0.0.1:8080/webgl-huodian/'; // 替换为实际的 WebGL 页面路径
   } else if (item === '风力发电厂') {
-    currentSrc.value = 'http://127.0.0.1:8081/webgl-fengdian/'; // 替换为实际的 WebGL 页面路径
+    currentSrc.value = 'http://127.0.0.1:8080/webgl-fengdian/'; // 替换为实际的 WebGL 页面路径
   } else if (item === '变电站') {
-    currentSrc.value = 'http://127.0.0.1:8081/webgl-biandian/'; // 替换为实际的 WebGL 页面路径
+    currentSrc.value = 'http://127.0.0.1:8080/webgl-biandian/'; // 替换为实际的 WebGL 页面路径
   }
 }
 </script>
