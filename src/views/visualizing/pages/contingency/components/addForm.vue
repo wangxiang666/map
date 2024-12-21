@@ -1,10 +1,11 @@
 <template>
   <div class="add-form">
-    <h2 class="title">新增预案</h2>
+    <h2 class="title">{{ mode === 'view' ? '查看' : !formData.id || formData.id == 0 ? '新增' : '编辑' }}预案</h2>
     <el-form ref="formRef"
              :model="formData"
              :rules="rules"
              label-width="auto"
+             :disabled="mode === 'view'"
              label-position="right">
       <el-form-item label="预案名称"
                     prop="name">
@@ -89,15 +90,17 @@
                     placeholder="请输入风幕高度" />
         </el-form-item>
       </template>
-      <div class="submit-bottom">
-        <el-button type="primary"
-                   class="submit-btn bg-form-btn"
-                   @click="onSubmit">确认</el-button>
-        <el-button type="primary"
-                   class="submit-btn bg-form-btn"
-                   @click="onCancel">返回</el-button>
-      </div>
+
     </el-form>
+    <div class="submit-bottom">
+      <el-button type="primary"
+                 class="submit-btn bg-form-btn"
+                 v-if="mode === 'edit'"
+                 @click="onSubmit">确认</el-button>
+      <el-button type="primary"
+                 class="submit-btn bg-form-btn"
+                 @click="onCancel">返回</el-button>
+    </div>
   </div>
 </template>
 
@@ -108,11 +111,13 @@ import { listPlanMgr, getPlanMgr, delPlanMgr, addPlanMgr, updatePlanMgr } from '
 import { PlanMgrTableColumns, PlanMgrInfoData, PlanMgrTableDataState, PlanMgrEditState } from './model';
 import { attackMethodDic, defensiveWeaponDic } from '/@/views/visualizing/pages/dic';
 import { listAssaultWeaponMgr } from '/@/api/sim/AssaultWeaponMgr';
+import { parse } from 'path';
 export default defineComponent({
 	name: 'apiV1SimPlanMgrEdit',
 	components: {},
 	props: {},
 	setup(props, { emit }) {
+		const mode = ref<string | undefined>('edit');
 		const { proxy } = <any>getCurrentInstance();
 		const formRef = ref<HTMLElement | null>(null);
 		const menuRef = ref();
@@ -144,16 +149,22 @@ export default defineComponent({
 			},
 		});
 		// 打开弹窗
-		const openDialog = (row?: PlanMgrInfoData) => {
+		const openDialog = (row?: PlanMgrInfoData, flag?: 'string' | undefined) => {
+			mode.value = flag;
 			resetForm();
 			if (row) {
 				getPlanMgr(row.id!).then((res: any) => {
 					const data = res.data;
 					data.damageType = parseInt(data.damageType);
-					data.attackMethod = '' + data.attackMethod;
+					data.attackMethod = parseInt(data.attackMethod);
 					data.defenseFlag = parseInt(data.defenseFlag);
-					data.defensiveWeapon = '' + data.defensiveWeapon;
+					data.weaponModel = parseInt(data.weaponModel);
+					data.defensiveWeapon = parseInt(data.defensiveWeapon);
 					state.formData = data;
+					if (state.formData.attackMethod === 4) {
+						// 发送请求获取数据
+						fetchDataForGrapheneBomb();
+					}
 				});
 			}
 		};
@@ -224,7 +235,6 @@ export default defineComponent({
 		};
 
 		const handleAttackMethodChange = () => {
-			console.log(state.formData.attackMethod, typeof state.formData.attackMethod);
 			if (state.formData.attackMethod === 4) {
 				// 发送请求获取数据
 				fetchDataForGrapheneBomb();
@@ -234,12 +244,12 @@ export default defineComponent({
 		const fetchDataForGrapheneBomb = () => {
 			listAssaultWeaponMgr({ weaponType: 1 }).then((res: any) => {
 				const data = res.data;
-				console.log(data);
 				state.formData.weaponModelList = data.list;
 			});
 		};
 
 		return {
+			mode,
 			defensiveWeaponOptions,
 			typeChange,
 			attackMethodOptions,
@@ -274,6 +284,7 @@ export default defineComponent({
 	width: 100%;
 	display: flex;
 	justify-content: center;
+	margin-top: 40px;
 }
 .submit-btn {
 	width: 248px;

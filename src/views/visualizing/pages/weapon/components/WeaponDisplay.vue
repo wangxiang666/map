@@ -16,7 +16,8 @@
             <el-image :src="proxy.getUpFileUrl('images/'+weapon.image)"
                       scroll-container=".weapons-grid"
                       lazy
-                      class="weapon-image">
+                      class="weapon-image"
+                      @click="showWeapon(weapon.id)">
 
               <template #error>
                 <div class="image-slot">
@@ -40,6 +41,7 @@
     <addWeaponDialog ref="addWeaponRef"
                      :weaponType="currentWeaponType"
                      @AssaultWeaponMgrList="AssaultWeaponMgrList"></addWeaponDialog>
+    <weaponDetail ref="weaponDetailRef" />
   </div>
 </template>
 
@@ -54,6 +56,7 @@ import {
   updateAssaultWeaponMgr,
 } from '/@/api/sim/AssaultWeaponMgr';
 import addWeaponDialog from './addWeaponDialog.vue';
+import weaponDetail from './weaponDetail.vue'
 const { proxy } = getCurrentInstance();
 const deleteWeapon = (id) => {
   ElMessageBox({
@@ -105,6 +108,12 @@ const addWeaponRef = ref();
 const addWeapon = () => {
   addWeaponRef.value.openDialog();
 };
+const weaponDetailRef = ref()
+const showWeapon = (id) => {
+  getAssaultWeaponMgr(id).then(res => {
+    weaponDetailRef.value.open(res.data)
+  })
+}
 defineExpose({
   getWeaponData,
 });

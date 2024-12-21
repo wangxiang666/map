@@ -34,6 +34,7 @@
 
     <!-- 表格区域 -->
     <el-table :data="tableData.data"
+              :height="770"
               border
               style="width: 100%">
       <el-table-column type="index"
@@ -64,12 +65,13 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="creator"
+      <el-table-column prop="operator"
                        label="创建人" />
       <el-table-column label="操作"
                        width="280">
         <template #default="scope">
           <el-button link
+                     @click="handleView(scope.row)"
                      type="primary">查看</el-button>
 
           <el-button type="primary"
@@ -83,20 +85,19 @@
                      v-auth="'api/v1/sim/deductionMgr/delete'">删除</el-button>
           <el-button link
                      type="primary"
+                     v-if="scope.row.status === 0"
                      @click="deduct(scope.row)">推演</el-button>
           <el-button link
+                     @click="rePlayDeduction(scope.row)"
                      type="primary">回放</el-button>
         </template>
       </el-table-column>
     </el-table>
-
-    <!-- 分页 -->
-    <div class="pagination">
-      <span>上一页</span>
-      <span class="page-num">1</span>
-      <span>下一页</span>
-      <span class="total">共10页</span>
-    </div>
+    <pagination v-show="tableData.total > 0"
+                :total="tableData.total"
+                v-model:page="tableData.param.pageNum"
+                v-model:limit="tableData.param.pageSize"
+                @pagination="DeductionMgrList" />
   </div>
 </template>
   <script lang="ts">
@@ -231,12 +232,16 @@ export default defineComponent({
 				.catch(() => {});
 		};
 		const handleView = (row: DeductionMgrTableColumns) => {
-			detailRef.value.openDialog(toRaw(row));
+			emit('handleView', toRaw(row));
 		};
 		const deduct = (row: DeductionMgrTableColumns) => {
 			emit('deduct', row);
 		};
+		const rePlayDeduction = (row: DeductionMgrTableColumns) => {
+			emit('rePlayDeduction', row);
+		};
 		return {
+			rePlayDeduction,
 			deduct,
 			proxy,
 			editRef,
@@ -291,50 +296,6 @@ export default defineComponent({
 	/* 需要添加深色背景图片 */
 	/* background-image: url('@/assets/input-bg.png'); */
 	background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* 按钮样式 */
-.search-btn,
-.add-btn {
-	margin-left: 10px;
-	/* 需要添加蓝色渐变背景图片 */
-	/* background-image: url('@/assets/button-bg.png'); */
-	background: linear-gradient(to right, #0066ff, #0099ff);
-	border: none;
-}
-
-/* 表格样式覆盖 */
-:deep(.el-table) {
-	background-color: transparent;
-	color: #fff;
-}
-
-:deep(.el-table th),
-:deep(.el-table tr) {
-	background-color: rgba(255, 255, 255, 0.1);
-	color: #fff;
-}
-
-:deep(.el-table td) {
-	border-color: rgba(255, 255, 255, 0.1);
-}
-
-/* 分页样式 */
-.pagination {
-	margin-top: 20px;
-	display: flex;
-	align-items: center;
-	color: #fff;
-}
-
-.page-num {
-	margin: 0 10px;
-	padding: 0 10px;
-	background-color: rgba(255, 255, 255, 0.1);
-}
-
-.total {
-	margin-left: 20px;
 }
 </style>
   

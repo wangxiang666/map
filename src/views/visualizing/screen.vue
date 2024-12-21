@@ -1,8 +1,8 @@
 <!--
  * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-08 20:58:42
- * @LastEditors: 王翔
- * @LastEditTime: 2024-12-19 18:44:06
+ * @LastEditors: wangxiang666 534167821@qq.com
+ * @LastEditTime: 2024-12-21 21:27:13
  * @FilePath: /es-big-screen/Users/wangxiang/ownSystem/map/src/views/visualizing/screen.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -282,5 +282,26 @@ onUnmounted(() => {
 	.el-drawer__header {
 		color: #fff;
 	}
+}
+:deep(.el-pagination__sizes) {
+	.el-input {
+		width: 180px;
+	}
+}
+:deep(.el-pagination__editor.el-input) {
+	width: 140px;
+}
+/* 表格样式覆盖 */
+:deep(.el-table) {
+	background-color: transparent;
+	color: #fff;
+	--el-table-border-color: #067fb8;
+}
+
+:deep(.el-table th),
+:deep(.el-table tr),
+:deep(.el-table td) {
+	background-color: #020e29 !important;
+	color: #fff;
 }
 </style>

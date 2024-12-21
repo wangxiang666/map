@@ -1,38 +1,67 @@
 <template>
-	<div class="add-form">
-		<h2 class="title">{{ mode === 'view' ? '查看' : !formData.id || formData.id == 0 ? '新增' : '编辑' }}评估任务</h2>
-		<el-form ref="formRef" :model="formData" :rules="rules" label-width="auto" :disabled="mode === 'view'" label-position="right">
-			<el-form-item label="名称" prop="name">
-				<el-input v-model="formData.name" placeholder="请输入名称" />
-			</el-form-item>
+  <div class="add-form">
+    <h2 class="title">{{ mode === 'view' ? '查看' : !formData.id || formData.id == 0 ? '新增' : '编辑' }}评估任务</h2>
+    <el-form ref="formRef"
+             :model="formData"
+             :rules="rules"
+             label-width="auto"
+             :disabled="mode === 'view'"
+             label-position="right">
+      <el-form-item label="名称"
+                    prop="name">
+        <el-input v-model="formData.name"
+                  placeholder="请输入名称" />
+      </el-form-item>
 
-			<el-form-item label="推演任务" prop="deduction">
-				<el-select v-model="formData.deduction" placeholder="请选择推演任务">
-					<el-option v-for="item in deductionList" :key="item.id" :label="item.name" :value="item.id" />
-				</el-select>
-			</el-form-item>
+      <el-form-item label="推演任务"
+                    prop="deduction">
+        <el-select v-model="formData.deduction"
+                   placeholder="请选择推演任务">
+          <el-option v-for="item in deductionList"
+                     :key="item.id"
+                     :label="item.name"
+                     :value="item.id" />
+        </el-select>
+      </el-form-item>
 
+      <el-form-item label="评估指标"
+                    prop="target">
+        <el-select v-model="formData.target"
+                   placeholder="请选择评估指标">
+          <el-option v-for="item in targetOptions"
+                     :key="item.key"
+                     :label="item.value"
+                     :value="parseInt(item.key)"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="评估算法"
+                    prop="algorithm">
+        <el-select v-model="formData.algorithm"
+                   placeholder="请选择评估算法">
+          <el-option v-for="dict in sim_evaluation_algorithm"
+                     :key="dict.value"
+                     :label="dict.label"
+                     :value="dict.value"></el-option>
+        </el-select>
+      </el-form-item>
 
-			<el-form-item label="评估指标" prop="target">
-				<el-select v-model="formData.target" placeholder="请选择评估指标">
-					<el-option v-for="item in targetOptions" :key="item.key" :label="item.value" :value="item.key"></el-option>
-				</el-select>
-			</el-form-item>
-			<el-form-item label="评估算法" prop="algorithm">
-				<el-select v-model="formData.algorithm" placeholder="请选择评估算法">
-					<el-option v-for="dict in sim_evaluation_algorithm" :key="dict.value" :label="dict.label" :value="dict.value"></el-option>
-				</el-select>
-			</el-form-item>
-			
-			<el-form-item label="描述" prop="note">
-				<el-input v-model="formData.note" type="textarea" placeholder="请输入描述" />
-			</el-form-item>
-		</el-form>
-		<div class="submit-bottom">
-			<el-button type="primary" class="submit-btn bg-form-btn" v-if="mode === 'edit'" @click="onSubmit">确认</el-button>
-			<el-button type="primary" class="submit-btn bg-form-btn" @click="onCancel">返回</el-button>
-		</div>
-	</div>
+      <el-form-item label="描述"
+                    prop="note">
+        <el-input v-model="formData.note"
+                  type="textarea"
+                  placeholder="请输入描述" />
+      </el-form-item>
+    </el-form>
+    <div class="submit-bottom">
+      <el-button type="primary"
+                 class="submit-btn bg-form-btn"
+                 v-if="mode === 'edit'"
+                 @click="onSubmit">确认</el-button>
+      <el-button type="primary"
+                 class="submit-btn bg-form-btn"
+                 @click="onCancel">返回</el-button>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -91,18 +120,16 @@ export default defineComponent({
 			deductionList: [],
 		});
 
-
 		onMounted(() => {
 			fetchDeductionList();
 		});
 
-		const fetchDeductionList= () => {
+		const fetchDeductionList = () => {
 			listDeductionMgr().then((res: any) => {
 				let list = res.data.list ?? [];
 				state.deductionList = list;
 			});
 		};
-
 
 		// 打开弹窗
 		const openDialog = (row?: EvaluationMgrInfoData, flag?: 'string' | undefined) => {

@@ -1,8 +1,8 @@
 <!--
  * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-11 14:20:28
- * @LastEditors: 王翔
- * @LastEditTime: 2024-12-21 19:11:38
+ * @LastEditors: wangxiang666 534167821@qq.com
+ * @LastEditTime: 2024-12-22 00:53:32
  * @FilePath: /es-big-screen/Users/wangxiang/ownSystem/map/src/views/visualizing/pages/taskManage/components/leftMap.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -42,7 +42,8 @@
         <mainScreen ref="mapViewRef"
                     :deductStatus="deductStatus"
                     :currentStep="currentStep"
-                    :targetRow="destination"></mainScreen>
+                    :targetRow="destination"
+                    :isRePlay="showControl"></mainScreen>
       </div>
     </div>
 
@@ -55,8 +56,7 @@ import stop from '../../../images/deduction/stop.png'
 import pre from '../../../images/deduction/pre.png'
 import next from '../../../images/deduction/next.png'
 import over from '../../../images/deduction/over.png'
-import { ref, watch } from 'vue'
-import { map } from 'lodash'
+import { computed, ref, watch, nextTick } from 'vue'
 const props = defineProps({
   deductStatus: {
     type: Boolean,
@@ -71,6 +71,7 @@ watch(() => props.deductStatus, () => {
 }, { deep: true, immediately: true })
 const emit = defineEmits(['backToList'])
 const backToList = () => {
+  mapViewRef.value.showCenterBox = false
   mapViewRef.value.resetDeduction()
   currentStep.value = 0
   emit('backToList')
@@ -97,42 +98,55 @@ const taskList = ref([
     margin: '80px'
   }
 ])
-const controls = ref(
-  [
-    {
-      directive: 'play',
-      img: play
-    },
-    {
-      directive: 'stop',
-      img: stop
-    },
-    {
-      directive: 'pre',
-      img: pre
-    },
-    {
-      directive: 'next',
-      img: next
-    },
-    {
-      directive: 'over',
-      img: over
-    }
-  ]
-)
+const controls = computed(() => {
+  if (showControl.value) {
+    return [
+      [
+        {
+          directive: 'play',
+          img: play
+        },
+        {
+          directive: 'stop',
+          img: stop
+        },
+        {
+          directive: 'pre',
+          img: pre
+        },
+        {
+          directive: 'next',
+          img: next
+        },
+        {
+          directive: 'over',
+          img: over
+        }
+      ]
+    ]
+  } else {
+    return [
+      {
+        directive: 'over',
+        img: over
+      }
+    ]
+  }
+})
 const currentStep = ref(0)
 const stopFlag = ref(false)
 const handleControl = (directive) => {
   switch (directive) {
     case 'play':
-      stopFlag.value = false
-      if (currentStep.value === 5) {
-        currentStep.value = 1
-      } else {
-        currentStep.value++
+      if ([0, 5].includes(currentStep.value) || stopFlag.value) {
+        stopFlag.value = false
+        if (currentStep.value === 5) {
+          currentStep.value = 1
+        } else {
+          currentStep.value++
+        }
+        handlePlay()
       }
-      handlePlay()
       break;
     case 'stop':
       stopFlag.value = true
@@ -149,7 +163,6 @@ const handleControl = (directive) => {
     case 'next':
       stopFlag.value = true
       clearTimeout(timer.value)
-      console.log(currentStep.value)
       if (currentStep.value < 5) {
         currentStep.value++
         handlePlay()
@@ -166,7 +179,7 @@ const handleControl = (directive) => {
 const mapViewRef = ref(null)
 const timer = ref(null)
 const handlePlay = () => {
-
+  mapViewRef.value.showCenterBox = false
   if (currentStep.value !== 4) {
     mapViewRef.value[`stepPlay${currentStep.value}`](props.destination.damageTargetName)
   }
@@ -184,6 +197,18 @@ const handlePlay = () => {
   }
 
 }
+const showControl = ref(true)
+const autoPlay = () => {
+  showControl.value = false
+  currentStep.value++
+  nextTick(() => {
+    handlePlay()
+  })
+}
+defineExpose({
+  autoPlay,
+  showControl
+})
 </script>
 <style lang="scss" scoped>
 .deduction-pannel {

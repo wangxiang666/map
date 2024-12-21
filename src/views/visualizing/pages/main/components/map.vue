@@ -89,16 +89,21 @@ import { Fill, Stroke, Style } from 'ol/style';
 import Overlay from 'ol/Overlay';
 import * as turf from '@turf/turf';
 import { MapBrowserEvent } from 'ol';
-import { fromLonLat, toLonLat, transform } from 'ol/proj';
 import Point from 'ol/geom/Point';
 import Feature from 'ol/Feature';
 import Icon from 'ol/style/Icon';
 import { svgIcon } from '/@/views/visualizing/images/deduction/plane.js';
 import LineString from 'ol/geom/LineString';
+import { addDeductionResult } from '/@/api/sim/DeductionMgr.ts';
+import { ElMessage } from 'element-plus';
 
 const props = defineProps({
 	deductStatus: {
-		Boolean,
+		type: Boolean,
+		default: false,
+	},
+	isRePlay: {
+		type: Boolean,
 		default: false,
 	},
 	currentStep: {
@@ -226,7 +231,7 @@ const initOl = () => {
 	vectorSource.once('featuresloadend', () => {
 		// 保存原始要素
 		originalNodeFeatures = vectorSource.getFeatures();
-		console.log(originalNodeFeatures);
+		// console.log(originalNodeFeatures);
 	});
 
 	// WFS 图层
@@ -350,7 +355,9 @@ const initOl = () => {
 		}
 
 		if (feature) {
-			combineNodeInfo(feature);
+			combineNodeInfo(feature, featureProperties);
+			// 更新当前要素和性
+			currentFeature.value = feature;
 			popoverVisible.value = true;
 			// 设置鼠标样式
 			if (mapElement) {
@@ -453,26 +460,24 @@ const searchChange = (query: any) => {
 		});
 	}
 };
-const combineNodeInfo = (feature: any) => {
-	// 更新当前要素和性
-	currentFeature.value = feature;
+const combineNodeInfo = (feature: any, refInstence: any) => {
 	const { flag, name, centroid_x, centroid_y, rating, voltage, plant_outp, plant_sour } = feature.getProperties();
 
 	if (typeof flag !== 'undefined') {
-		featureProperties.value = {
+		refInstence.value = {
 			名称: name,
 			经度: centroid_x,
 			纬度: centroid_y,
 			电压等级: voltage,
 		};
 		if (flag === 1) {
-			featureProperties.value['容量'] = rating;
+			refInstence.value['容量'] = rating;
 		} else {
-			featureProperties.value['装机容量'] = plant_outp;
-			featureProperties.value['发电厂类型'] = plant_sour;
+			refInstence.value['装机容量'] = plant_outp;
+			refInstence.value['发电厂类型'] = plant_sour;
 		}
 	} else {
-		featureProperties.value = {
+		refInstence.value = {
 			名称: name,
 			电压等级: voltage,
 		};
@@ -506,6 +511,7 @@ const deductioVectors = ref<{
 });
 // 推演相关
 const stepPlay1 = (name: string) => {
+	deductioVectors.value.deductionLayer?.getSource().clear();
 	// 获取feature的几何形状
 	const feature = originalNodeFeatures.find((feature: any) => {
 		return feature.get('name') === name;
@@ -518,8 +524,11 @@ const stepPlay1 = (name: string) => {
 		duration: 1000, // 动画持续时间，以毫秒为单位
 		maxZoom: 14,
 	});
+	combineNodeInfo(feature, featurePropertiesCenter);
+	showCenterBox.value = true;
 };
 const stepPlay2 = () => {
+	deductioVectors.value.deductionLayer?.getSource().clear();
 	map.getView().animate({
 		zoom: 7,
 		duration: 1000,
@@ -565,6 +574,9 @@ const stepPlay2 = () => {
 		});
 		deductioVectors.value.deductionLayer = deductionLayer;
 		map.addLayer(deductionLayer);
+	} else {
+		deductioVectors.value.deductionLayer.getSource().addFeature(iconFeature);
+		deductioVectors.value.deductionLayer.getSource().addFeature(lineFeature);
 	}
 
 	deductioVectors.value.planeFeature = iconFeature;
@@ -584,18 +596,6 @@ const stepPlay3 = () => {
 	});
 };
 
-// watch(
-// 	() => props.currentStep,
-// 	(current, old) => {
-// 		console.log('123123123', current, old);
-// 		if ([1, 5].indexOf(current) > -1) {
-// 			const layer = deductioVectors.value.deductionLayer;
-// 			if (layer) {
-// 				layer.setVisible(false);
-// 			}
-// 		}
-// 	}
-// );
 const startAnimation = () => {
 	if (!deductioVectors.value.planeFeature || !map) return;
 	const { targetFeature, planeFeature, deductionLayer, lineFeature } = deductioVectors.value;
@@ -646,6 +646,8 @@ const stepPlay5 = () => {
 			}),
 		})
 	);
+
+	const deductedForm = ref({});
 	// 重新添加原始要素并检查相交
 	originalNodeFeatures.forEach((feature) => {
 		vectorLayerNode.value.getSource().addFeature(feature);
@@ -674,8 +676,23 @@ const stepPlay5 = () => {
 						毁伤面积百分比: nodeAreaPercent.toFixed(2) + '%',
 						武器有效百分比: circleArea.toFixed(2) + '%',
 					};
+					deductedForm.value = {
+						taskId: props.targetRow.id,
+						targetArea: Number(nodeArea.toFixed(2)),
+						weaponArea: Number(circleArea.toFixed(2)),
+						intersectionArea: Number(turf.area(intersection).toFixed(2)),
+						damagedAreaPercentage: Number(nodeAreaPercent.toFixed(2)),
+						weaponEffectivenessPercentage: Number(circleArea.toFixed(2)),
+					};
 					showCenterBox.value = true;
-					console.log('Found intersection:', props.targetRow, '相交面积：', turf.area(intersection), nodeAreaPercent, circleArea);
+					if (props.isRePlay) {
+						addDeductionResult(deductedForm.value).then((res) => {
+							if (res.code === 0) {
+								ElMessage.success('推演完成');
+							}
+						});
+					}
+					// console.log('Found intersection:', props.targetRow, '相交面积：', turf.area(intersection), nodeAreaPercent, circleArea);
 					// 这里可以处理相交的结果
 					const intersectionFeature = new GeoJSON().readFeature(intersection);
 					intersectionFeature.setStyle(
@@ -689,7 +706,7 @@ const stepPlay5 = () => {
 							}),
 						})
 					);
-					vectorLayerNode.value.getSource().addFeature(intersectionFeature);
+					deductioVectors.value.deductionLayer?.getSource().addFeature(intersectionFeature);
 				}
 			} catch (error) {
 				console.warn('Error checking intersection:', error);
@@ -697,7 +714,7 @@ const stepPlay5 = () => {
 		}
 	});
 
-	vectorLayerNode.value.getSource().addFeature(circleFeature);
+	deductioVectors.value.deductionLayer?.getSource().addFeature(circleFeature);
 };
 const resetDeduction = () => {
 	const layer = deductioVectors.value.deductionLayer;
@@ -710,7 +727,6 @@ const resetDeduction = () => {
 		duration: 1000,
 	});
 };
-
 defineExpose({
 	stepPlay1,
 	stepPlay2,
@@ -718,6 +734,7 @@ defineExpose({
 	stepPlay5,
 	resetDeduction,
 	updateSizeMap,
+	showCenterBox,
 });
 </script>
 

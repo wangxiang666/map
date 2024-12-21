@@ -2,7 +2,7 @@
  * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-11 14:14:56
  * @LastEditors: wangxiang666 534167821@qq.com
- * @LastEditTime: 2024-12-19 22:34:36
+ * @LastEditTime: 2024-12-22 00:39:49
  * @FilePath: /es-big-screen/Users/wangxiang/ownSystem/map/src/views/visualizing/pages/taskManage/index.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -11,12 +11,15 @@
     <leftMap :class="{smallMap:showFrom}"
              :deductStatus="deductStatus"
              @backToList="deductStatus = false"
-             :destination="destination">
+             :destination="destination"
+             ref="leftMapRef">
     </leftMap>
     <manageTable v-show="!showFrom"
                  ref="tableRef"
                  @handleAdd="handleAdd"
-                 @deduct="handleDeduct"></manageTable>
+                 @deduct="handleDeduct"
+                 @rePlayDeduction="rePlayDeduction"
+                 @handleView="handleView"></manageTable>
     <div class="bg-container"
          v-show="showFrom">
       <addForm ref="addFormRef"
@@ -38,16 +41,27 @@ const operateDone = () => {
   showFrom.value = false;
 };
 const handleAdd = (row) => {
-  addFormRef.value.openDialog(row)
+  addFormRef.value.openDialog(row, 'edit')
   showFrom.value = true;
 };
 const deductStatus = ref(false)
 const destination = ref({})
+const leftMapRef = ref()
 const handleDeduct = (row) => {
   destination.value = row
   deductStatus.value = true
-  console.log(row)
+  leftMapRef.value.showControl = true
 }
+const rePlayDeduction = (row) => {
+  destination.value = row
+  deductStatus.value = true
+  leftMapRef.value.autoPlay()
+
+}
+const handleView = (row) => {
+  addFormRef.value.openDialog(row, 'view')
+  showFrom.value = true;
+};
 </script>
 <style lang="scss" scoped>
 .smallMap {

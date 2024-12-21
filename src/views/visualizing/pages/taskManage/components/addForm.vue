@@ -1,11 +1,12 @@
 <template>
   <div class="add-form">
-    <h2 class="title">新增推演任务</h2>
+    <h2 class="title">{{ mode === 'view' ? '查看' : !formData.id || formData.id == 0 ? '新增' : '编辑' }}推演任务</h2>
     <el-form ref="formRef"
              :model="formData"
              :rules="rules"
              label-width="auto"
-             label-position="right">
+             label-position="right"
+             :disabled="mode === 'view'">
       <el-form-item label="任务名称"
                     prop="name">
         <el-input v-model="formData.name"
@@ -22,8 +23,8 @@
       </el-form-item>
 
       <el-form-item label="攻击目标"
-                    prop="destroy_target">
-        <el-select v-model="formData.destroy_target"
+                    prop="destroyTarget">
+        <el-select v-model="formData.destroyTarget"
                    placeholder="请选择攻击目标">
           <el-option v-for="item in destroyTargetList"
                      :key="item.id"
@@ -33,8 +34,9 @@
       </el-form-item>
 
       <el-form-item label="毁伤预案"
-                    prop="destroy_plan">
-        <el-select v-model="formData.destroy_plan"
+                    prop="destroyPlan">
+
+        <el-select v-model="formData.destroyPlan"
                    placeholder="请选择毁伤预案">
           <el-option v-for="item in destroyPlanList"
                      :key="item.id"
@@ -44,24 +46,24 @@
       </el-form-item>
 
       <el-form-item label="控制方式"
-                    prop="control_mode">
-        <el-radio-group v-model="formData.control_mode">
+                    prop="controlMode">
+        <el-radio-group v-model="formData.controlMode">
           <el-radio label="1"
                     size="large">人不在回路</el-radio>
           <el-radio label="2"
                     size="large">人在回路</el-radio>
         </el-radio-group>
       </el-form-item>
-
-      <div class="submit-bottom">
-        <el-button type="primary"
-                   class="submit-btn bg-form-btn"
-                   @click="onSubmit">确认</el-button>
-        <el-button type="primary"
-                   class="submit-btn bg-form-btn"
-                   @click="onCancel">返回</el-button>
-      </div>
     </el-form>
+    <div class="submit-bottom">
+      <el-button type="primary"
+                 class="submit-btn bg-form-btn"
+                 v-if="mode === 'edit'"
+                 @click="onSubmit">确认</el-button>
+      <el-button type="primary"
+                 class="submit-btn bg-form-btn"
+                 @click="onCancel">返回</el-button>
+    </div>
   </div>
 </template>
 
@@ -80,6 +82,7 @@ export default defineComponent({
 	props: {},
 
 	setup(props, { emit }) {
+		const mode = ref<string | undefined>('edit');
 		const { proxy } = <any>getCurrentInstance();
 		const formRef = ref<HTMLElement | null>(null);
 		const menuRef = ref();
@@ -88,9 +91,9 @@ export default defineComponent({
 			formData: {
 				id: undefined,
 				name: undefined,
-				destroy_target: undefined, //毁伤目标
-				destroy_plan: undefined, // 毁伤预案
-				control_mode: undefined, // 控制方式
+				destroyTarget: undefined, //毁伤目标
+				destroyPlan: undefined, // 毁伤预案
+				controlMode: undefined, // 控制方式
 				status: undefined, // 状态
 				damage_area: undefined, // 毁伤面积
 				percentage_damage_degree: undefined, // 毁伤面积百分比
@@ -104,9 +107,9 @@ export default defineComponent({
 			// 表单校验
 			rules: {
 				name: [{ required: true, message: '预案名称不能为空', trigger: 'blur' }],
-				destroy_target: [{ required: true, message: '毁伤目标', trigger: 'blur' }],
-				destroy_plan: [{ required: true, message: '毁伤预案', trigger: 'blur' }],
-				control_mode: [{ required: true, message: '控制方式', trigger: 'blur' }],
+				destroyTarget: [{ required: true, message: '毁伤目标', trigger: 'blur' }],
+				destroyPlan: [{ required: true, message: '毁伤预案', trigger: 'blur' }],
+				controlMode: [{ required: true, message: '控制方式', trigger: 'blur' }],
 			},
 			destroyTargetList: [],
 			destroyPlanList: [],
@@ -134,7 +137,8 @@ export default defineComponent({
 		});
 
 		// 打开弹窗
-		const openDialog = (row?: DeductionMgrInfoData) => {
+		const openDialog = (row?: DeductionMgrInfoData, flag?: 'string' | undefined) => {
+			mode.value = flag;
 			resetForm();
 			if (row) {
 				getDeductionMgr(row.id!).then((res: any) => {
@@ -143,6 +147,7 @@ export default defineComponent({
 					data.attackMethod = '' + data.attackMethod;
 					data.defenseFlag = parseInt(data.defenseFlag);
 					data.defensiveWeapon = '' + data.defensiveWeapon;
+					data.controlMode = '' + data.controlMode;
 					state.formData = data;
 				});
 			}
@@ -202,6 +207,7 @@ export default defineComponent({
 		};
 
 		return {
+			mode,
 			// defensiveWeaponOptions,
 			// attackMethodOptions,
 			proxy,
@@ -234,6 +240,7 @@ export default defineComponent({
 	width: 100%;
 	display: flex;
 	justify-content: center;
+	margin-top: 40px;
 }
 .submit-btn {
 	width: 248px;
