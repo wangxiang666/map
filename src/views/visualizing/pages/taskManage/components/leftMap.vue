@@ -2,7 +2,7 @@
  * @Author: wangxiang666 534167821@qq.com
  * @Date: 2024-12-11 14:20:28
  * @LastEditors: 王翔
- * @LastEditTime: 2024-12-21 16:20:24
+ * @LastEditTime: 2024-12-21 19:11:38
  * @FilePath: /es-big-screen/Users/wangxiang/ownSystem/map/src/views/visualizing/pages/taskManage/components/leftMap.vue
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -13,9 +13,8 @@
 
       <div class="deduction-pannel"
            v-if="deductStatus">
-        <div class="deduction-title"
-             @click="backToList">
-          任务管理器
+        <div class="deduction-title">
+          {{destination.name}}
         </div>
         <div class="deduction-control">
           <div class="gradient-label">场景控制</div>
@@ -35,11 +34,18 @@
                class="task-item">{{ item.name }}</div>
         </div>
       </div>
+      <iframe src="https://blog.csdn.net/aaa_div/article/details/139509346"
+              frameborder="0"
+              class="iframe-webgl"
+              v-if="currentStep===4"></iframe>
       <div class="map-container">
         <mainScreen ref="mapViewRef"
-                    :deductStatus="deductStatus"></mainScreen>
+                    :deductStatus="deductStatus"
+                    :currentStep="currentStep"
+                    :targetRow="destination"></mainScreen>
       </div>
     </div>
+
   </div>
 </template>
 <script setup>
@@ -50,13 +56,14 @@ import pre from '../../../images/deduction/pre.png'
 import next from '../../../images/deduction/next.png'
 import over from '../../../images/deduction/over.png'
 import { ref, watch } from 'vue'
+import { map } from 'lodash'
 const props = defineProps({
   deductStatus: {
     type: Boolean,
     default: false
   },
   destination: {
-    type: String
+    type: Object
   }
 })
 watch(() => props.deductStatus, () => {
@@ -65,6 +72,7 @@ watch(() => props.deductStatus, () => {
 const emit = defineEmits(['backToList'])
 const backToList = () => {
   mapViewRef.value.resetDeduction()
+  currentStep.value = 0
   emit('backToList')
 }
 const taskList = ref([
@@ -113,31 +121,68 @@ const controls = ref(
     }
   ]
 )
-const currentStep = ref(1)
+const currentStep = ref(0)
+const stopFlag = ref(false)
 const handleControl = (directive) => {
   switch (directive) {
     case 'play':
+      stopFlag.value = false
+      if (currentStep.value === 5) {
+        currentStep.value = 1
+      } else {
+        currentStep.value++
+      }
       handlePlay()
       break;
     case 'stop':
+      stopFlag.value = true
+      clearTimeout(timer.value)
       break;
     case 'pre':
-      currentStep.value--
-      handlePlay()
+      stopFlag.value = true
+      clearTimeout(timer.value)
+      if (currentStep.value > 1) {
+        currentStep.value--
+        handlePlay()
+      }
       break;
     case 'next':
-      currentStep.value++
-      handlePlay()
+      stopFlag.value = true
+      clearTimeout(timer.value)
+      console.log(currentStep.value)
+      if (currentStep.value < 5) {
+        currentStep.value++
+        handlePlay()
+
+      }
       break;
     case 'over':
+      clearTimeout(timer.value)
       backToList()
       break;
   }
 }
-const timer = ref(null)
+
 const mapViewRef = ref(null)
+const timer = ref(null)
 const handlePlay = () => {
-  mapViewRef.value[`stepPlay${currentStep.value}`](props.destination)
+
+  if (currentStep.value !== 4) {
+    mapViewRef.value[`stepPlay${currentStep.value}`](props.destination.damageTargetName)
+  }
+  let delay = 4000
+  if (currentStep.value === 2) {
+    delay = 6000
+  } else if (currentStep.value === 4) {
+    delay = 3000
+  }
+  if (!stopFlag.value && currentStep.value < 5) {
+    timer.value = setTimeout(() => {
+      currentStep.value++
+      handlePlay()
+    }, delay)
+  }
+
 }
 </script>
 <style lang="scss" scoped>
@@ -269,6 +314,14 @@ const handlePlay = () => {
 		border-radius: 4px;
 		overflow: hidden;
 	}
+}
+.iframe-webgl {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 9998;
 }
 </style>
 

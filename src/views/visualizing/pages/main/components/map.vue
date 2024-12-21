@@ -26,7 +26,15 @@
       </el-icon>
     </div>
   </div>
-
+  <div class="center-info-box"
+       v-if="showCenterBox">
+    <div v-for="(value, key) in featurePropertiesCenter"
+         :key="key">
+      <template v-if="key !== 'geometry' && key !== 'geom'&&value">
+        <strong>{{ key }}：</strong> {{ value }}
+      </template>
+    </div>
+  </div>
   <!-- 使用 element-plus 的 popover -->
   <el-popover ref="popoverRef"
               :visible="popoverVisible"
@@ -37,7 +45,7 @@
               :width="250"
               :show-after="500"
               popper-class="feature-popover"
-			  :popper-style="{
+              :popper-style="{
               backgroundColor: 'rgba(0, 0, 255, 0.3)', // 设置背景色为蓝色透明度90%
               border: '1px solid #ccc',
               borderRadius: '4px',
@@ -60,12 +68,13 @@
   <operateDrawer ref="drawerRef" />
   <searchDrawer ref="seachRef"
                 @search-change="searchChange" />
+
 </template>
 
 <script setup lang="ts">
 import operateDrawer from './operateDrawer.vue';
 import searchDrawer from './searchDrawer.vue';
-import { onMounted, onBeforeUnmount, ref, reactive, nextTick } from 'vue';
+import { onMounted, onBeforeUnmount, ref, reactive, nextTick, watch } from 'vue';
 import { NextLoading } from '/@/utils/loading';
 import 'ol/ol.css';
 import Map from 'ol/Map';
@@ -87,10 +96,22 @@ import Icon from 'ol/style/Icon';
 import { svgIcon } from '/@/views/visualizing/images/deduction/plane.js';
 import LineString from 'ol/geom/LineString';
 
-defineProps({
+const props = defineProps({
 	deductStatus: {
 		Boolean,
 		default: false,
+	},
+	currentStep: {
+		type: Number,
+		default: 0,
+		require: false,
+	},
+	targetRow: {
+		type: Object,
+		require: false,
+		default: () => {
+			return {};
+		},
 	},
 });
 
@@ -125,6 +146,7 @@ interface FeatureProperties {
 }
 // Update the featureProperties ref type
 const featureProperties = ref<FeatureProperties>({});
+const featurePropertiesCenter = ref({});
 const mousePosition = reactive({ x: 0, y: 0 });
 const popoverRef = ref();
 
@@ -312,74 +334,6 @@ const initOl = () => {
 		overlays: [popup], // 添加overlay到地图
 	});
 
-	// 修改点击事件处理
-	// map.on('click', function (evt: MapBrowserEvent<MouseEvent>) {
-	// 	const coordinate = evt.coordinate;
-
-	// 	// 清除所有要素
-	// 	vectorLayerNode.value.getSource().clear();
-	// 	// 创建圆形
-	// 	const point = turf.point([coordinate[0], coordinate[1]]);
-	// 	const circle = turf.circle(point, 88, {
-	// 		steps: 64,
-	// 		units: 'meters',
-	// 	});
-
-	// 	const circleFeature = new GeoJSON().readFeature(circle);
-	// 	circleFeature.setStyle(
-	// 		new Style({
-	// 			stroke: new Stroke({
-	// 				color: 'green',
-	// 				width: 2,
-	// 			}),
-	// 			fill: new Fill({
-	// 				color: 'rgba(0,255,0,0.2)',
-	// 			}),
-	// 		})
-	// 	);
-	// 	// 重新添加原始要素并检查相交
-	// 	originalNodeFeatures.forEach((feature) => {
-	// 		vectorLayerNode.value.getSource().addFeature(feature);
-
-	// 		// 将 OpenLayers Feature 转换为 GeoJSON 格式
-	// 		const format = new GeoJSON();
-	// 		const featureGeoJSON = format.writeFeatureObject(feature, {
-	// 			featureProjection: 'EPSG:4326',
-	// 		});
-
-	// 		// 确保我们有正确的 GeoJSON 格式
-	// 		if (featureGeoJSON.geometry && featureGeoJSON.geometry.type === 'MultiPolygon') {
-	// 			try {
-	// 				// 将 MultiPolygon 换为 Feature
-	// 				const multiPolygonFeature = turf.multiPolygon(featureGeoJSON.geometry.coordinates);
-	// 				// 现在可以使用 turf.intersect
-	// 				const intersection = turf.intersect(multiPolygonFeature, circle);
-	// 				if (intersection) {
-	// 					// console.log('Found intersection:', intersection, '相面积：', turf.area(intersection));
-	// 					// 这里可以处理相交的结果
-	// 					const intersectionFeature = new GeoJSON().readFeature(intersection);
-	// 					intersectionFeature.setStyle(
-	// 						new Style({
-	// 							stroke: new Stroke({
-	// 								color: 'yellow',
-	// 								width: 2,
-	// 							}),
-	// 							fill: new Fill({
-	// 								color: 'rgba(255,255,0,1)',
-	// 							}),
-	// 						})
-	// 					);
-	// 					vectorLayerNode.value.getSource().addFeature(intersectionFeature);
-	// 				}
-	// 			} catch (error) {
-	// 				console.warn('Error checking intersection:', error);
-	// 			}
-	// 		}
-	// 	});
-
-	// 	vectorLayerNode.value.getSource().addFeature(circleFeature);
-	// });
-
 	// 修改鼠标移动事件处理
 	map.on('pointermove', function (evt: MapBrowserEvent<MouseEvent>) {
 		const pixel = evt.pixel;
@@ -396,30 +350,7 @@ const initOl = () => {
 		}
 
 		if (feature) {
-			// 更新当前要素和性
-			currentFeature.value = feature;
-			const { flag, name, centroid_x, centroid_y, rating, voltage, plant_outp, plant_sour } = feature.getProperties();
-
-			if (typeof flag !== 'undefined') {
-				featureProperties.value = {
-					名称: name,
-					经度: centroid_x,
-					纬度: centroid_y,
-					电压等级: voltage,
-				};
-				if (flag === 1) {
-					featureProperties.value['容量'] = rating;
-				} else {
-					featureProperties.value['装机容量'] = plant_outp;
-					featureProperties.value['发电厂类型'] = plant_sour;
-				}
-			} else {
-				featureProperties.value = {
-					名称: name,
-					电压等级: voltage,
-				};
-			}
-
+			combineNodeInfo(feature);
 			popoverVisible.value = true;
 			// 设置鼠标样式
 			if (mapElement) {
@@ -522,6 +453,31 @@ const searchChange = (query: any) => {
 		});
 	}
 };
+const combineNodeInfo = (feature: any) => {
+	// 更新当前要素和性
+	currentFeature.value = feature;
+	const { flag, name, centroid_x, centroid_y, rating, voltage, plant_outp, plant_sour } = feature.getProperties();
+
+	if (typeof flag !== 'undefined') {
+		featureProperties.value = {
+			名称: name,
+			经度: centroid_x,
+			纬度: centroid_y,
+			电压等级: voltage,
+		};
+		if (flag === 1) {
+			featureProperties.value['容量'] = rating;
+		} else {
+			featureProperties.value['装机容量'] = plant_outp;
+			featureProperties.value['发电厂类型'] = plant_sour;
+		}
+	} else {
+		featureProperties.value = {
+			名称: name,
+			电压等级: voltage,
+		};
+	}
+};
 const resetMap = () => {
 	vectorLayerNode.value.getSource().clear();
 	originalNodeFeatures.forEach((f: any) => {
@@ -601,22 +557,45 @@ const stepPlay2 = () => {
 		}),
 	});
 
-	const deductionLayer = new VectorLayer({
-		source: new VectorSource({
-			features: [lineFeature, iconFeature], // Add both features to the layer
-		}),
-	});
+	if (!deductioVectors.value.deductionLayer) {
+		const deductionLayer = new VectorLayer({
+			source: new VectorSource({
+				features: [lineFeature, iconFeature], // Add both features to the layer
+			}),
+		});
+		deductioVectors.value.deductionLayer = deductionLayer;
+		map.addLayer(deductionLayer);
+	}
 
 	deductioVectors.value.planeFeature = iconFeature;
 	deductioVectors.value.lineFeature = lineFeature;
-	deductioVectors.value.deductionLayer = deductionLayer;
-	map.addLayer(deductionLayer);
 	iconFeature.setStyle(iconStyle);
 
 	setTimeout(() => {
 		startAnimation();
 	}, 2000);
 };
+const stepPlay3 = () => {
+	const { centroid_x, centroid_y } = deductioVectors.value.targetFeature.getProperties();
+	map.getView().animate({
+		center: [centroid_x, centroid_y],
+		zoom: 15,
+		duration: 1000,
+	});
+};
+
+// watch(
+// 	() => props.currentStep,
+// 	(current, old) => {
+// 		console.log('123123123', current, old);
+// 		if ([1, 5].indexOf(current) > -1) {
+// 			const layer = deductioVectors.value.deductionLayer;
+// 			if (layer) {
+// 				layer.setVisible(false);
+// 			}
+// 		}
+// 	}
+// );
 const startAnimation = () => {
 	if (!deductioVectors.value.planeFeature || !map) return;
 	const { targetFeature, planeFeature, deductionLayer, lineFeature } = deductioVectors.value;
@@ -641,13 +620,102 @@ const startAnimation = () => {
 	};
 	requestAnimationFrame(animate);
 };
+const showCenterBox = ref(false);
+const stepPlay5 = () => {
+	// 修改点击事件处理
+	const { centroidX, centroidY, dispersionRadius } = props.targetRow;
+	const coordinate = [centroidX, centroidY];
 
-const resetDeduction = () => {
-	deductioVectors.value.deductionLayer.getSource().clear();
+	// 清除所有要素
+	vectorLayerNode.value.getSource().clear();
+	// 创建圆形
+	const point = turf.point([coordinate[0], coordinate[1]]);
+	const circle = turf.circle(point, dispersionRadius, {
+		steps: 64,
+		units: 'meters',
+	});
+	const circleFeature = new GeoJSON().readFeature(circle);
+	circleFeature.setStyle(
+		new Style({
+			stroke: new Stroke({
+				color: 'green',
+				width: 2,
+			}),
+			fill: new Fill({
+				color: 'rgba(0,255,0,0.2)',
+			}),
+		})
+	);
+	// 重新添加原始要素并检查相交
+	originalNodeFeatures.forEach((feature) => {
+		vectorLayerNode.value.getSource().addFeature(feature);
+
+		// 将 OpenLayers Feature 转换为 GeoJSON 格式
+		const format = new GeoJSON();
+		const featureGeoJSON = format.writeFeatureObject(feature, {
+			featureProjection: 'EPSG:4326',
+		});
+
+		// 确保我们有正确的 GeoJSON 格式
+		if (featureGeoJSON.geometry && featureGeoJSON.geometry.type === 'MultiPolygon') {
+			try {
+				// 将 MultiPolygon 换为 Feature
+				const multiPolygonFeature = turf.multiPolygon(featureGeoJSON.geometry.coordinates);
+				// 现在可以使用 turf.intersect
+				const intersection = turf.intersect(multiPolygonFeature, circle);
+				if (intersection) {
+					const nodeArea = deductioVectors.value.targetFeature?.get('node_area');
+					const nodeAreaPercent = (turf.area(intersection) / nodeArea) * 100;
+					const circleArea = (turf.area(intersection) / turf.area(circle)) * 100;
+					featurePropertiesCenter.value = {
+						电厂面积: nodeArea.toFixed(2) + 'm²',
+						武器面积: turf.area(circle).toFixed(2) + 'm²',
+						相交面积: turf.area(intersection).toFixed(2) + 'm²',
+						毁伤面积百分比: nodeAreaPercent.toFixed(2) + '%',
+						武器有效百分比: circleArea.toFixed(2) + '%',
+					};
+					showCenterBox.value = true;
+					console.log('Found intersection:', props.targetRow, '相交面积：', turf.area(intersection), nodeAreaPercent, circleArea);
+					// 这里可以处理相交的结果
+					const intersectionFeature = new GeoJSON().readFeature(intersection);
+					intersectionFeature.setStyle(
+						new Style({
+							stroke: new Stroke({
+								color: 'yellow',
+								width: 2,
+							}),
+							fill: new Fill({
+								color: 'rgba(255,255,0,1)',
+							}),
+						})
+					);
+					vectorLayerNode.value.getSource().addFeature(intersectionFeature);
+				}
+			} catch (error) {
+				console.warn('Error checking intersection:', error);
+			}
+		}
+	});
+
+	vectorLayerNode.value.getSource().addFeature(circleFeature);
 };
+const resetDeduction = () => {
+	const layer = deductioVectors.value.deductionLayer;
+	if (layer) {
+		layer.getSource().clear();
+	}
+	map.getView().animate({
+		center: [120.78931808471699, 23.621544837951505],
+		zoom: 8,
+		duration: 1000,
+	});
+};
+
 defineExpose({
 	stepPlay1,
 	stepPlay2,
+	stepPlay3,
+	stepPlay5,
 	resetDeduction,
 	updateSizeMap,
 });
@@ -702,5 +770,21 @@ defineExpose({
 }
 .custom-reset {
 	right: 70px;
+}
+.center-info-box {
+	position: fixed;
+	top: 300px;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: rgba(233, 198, 68, 0.2);
+	border: 1px solid rgba(233, 198, 68, 0.5);
+	padding: 20px;
+	border-radius: 4px;
+	z-index: 999;
+	width: 400px;
+	color: #fff;
+	font-size: 24px;
+	font-weight: bold;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 </style>

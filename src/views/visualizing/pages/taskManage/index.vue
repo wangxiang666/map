@@ -44,7 +44,7 @@ const handleAdd = (row) => {
 const deductStatus = ref(false)
 const destination = ref({})
 const handleDeduct = (row) => {
-  destination.value = row.damageTargetName
+  destination.value = row
   deductStatus.value = true
   console.log(row)
 }
